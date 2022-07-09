@@ -105,7 +105,7 @@ class Network(object):
         return min(1_000_000, j_func)
 
     def SGD(self, training_data, epochs, mini_batch_size, eta,
-            test_data=None, count_j=True):
+            test_data=None, count_j=False):
         """
         Обучить нейронную сеть, используя алгоритм стохастического
         (mini-batch) градиентного спуска.

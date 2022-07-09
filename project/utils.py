@@ -54,7 +54,7 @@ def import_network(path: str) -> network.Network:
 
 def import_csv_table(path: str) -> np.ndarray:
     """
-    Import csv table as np array.
+    Import csv table as numpy array.
 
     Parameters
     ----------
@@ -67,6 +67,23 @@ def import_csv_table(path: str) -> np.ndarray:
     """
     table = np.genfromtxt(path, delimiter=',')
     return table
+
+
+def export_csv_table(table: np.ndarray, path: str) -> None:
+    """
+    Export numpy array to csv table.
+
+    Parameters
+    ----------
+    table: np.ndarray
+        Table to export
+    path: str
+        Path to csv table
+    Returns
+    -------
+    None
+    """
+    np.savetxt(path, table, delimiter=",")
 
 
 def split_table(table: np.ndarray, len_answers=1) -> Tuple[np.ndarray, np.ndarray]:
@@ -91,8 +108,7 @@ def split_table(table: np.ndarray, len_answers=1) -> Tuple[np.ndarray, np.ndarra
 
 def build_plot(network: network.Network, interval: Tuple[float, float], step: float) -> None:
     """
-    This method saves the neural network to a file
-    using the pickle library functions.
+    Builds a two-dimensional graph on an interval with a given step.
 
     Parameters
     ----------
@@ -118,6 +134,71 @@ def build_plot(network: network.Network, interval: Tuple[float, float], step: fl
         y.append(temp)
     plt.plot(x, y)
     plt.show()
+
+
+def _build_table(network: network.Network, axes: list[tuple[str, tuple[float, float, float]]], acc=None) -> list:
+    """
+    Supporting method for taken network answer.
+
+    Parameters
+    ----------
+    network: network.Network
+        Neural network for build table
+    axes: list[tuple[str, tuple[float, float, float]]]
+        List of variables with parameters (left, right and step).
+    acc: np.ndarray
+        Supporting array for variables value
+    Returns
+    -------
+    table: list
+        Table with n+k column, where n is the number of variables,
+        the first k columns contain the response of the neural network,
+        and the last n columns in each row are the values of the variables in the same order as they were input
+    """
+    if axes:
+        if acc is None:
+            acc = np.array([])
+        curr_axis = axes.pop()
+        solution_table = []
+        i = curr_axis[1][0]
+        while i <= curr_axis[1][1]:
+            tacc = np.append(acc, [i])
+            res = _build_table(network, axes, tacc)
+            for temp in res:
+                temp.append(i)
+                solution_table.append(temp)
+            i += curr_axis[1][2]
+        axes.append(curr_axis)
+        return solution_table
+    elif acc is not None:
+        temp = network.feedforward(acc[:, np.newaxis])
+        res = float(temp)
+        return [[res]]
+
+
+def build_table(network: network.Network, axes: list[tuple[str, tuple[float, float, float]]]) -> list:
+    """
+    Builds a solution table on the interval given for each variable with the given step.
+
+    Parameters
+    ----------
+    network: network.Network
+        Neural network for build table
+    axes: list[tuple[str, tuple[float, float, float]]]
+        List of variables with parameters (left, right and step).
+    Returns
+    -------
+    table: list
+        Table with n+k column, where n is the number of variables,
+        the first n columns in each row are the values of the variables in the same order as they were input,
+        and the last k columns contain the response of the neural network
+    """
+    table = _build_table(network, axes)
+    res = []
+    k = network.sizes[-1]
+    for i in table:
+        res.append([*i[k:], *i[:k]])
+    return res
 
 
 def shuffle_table(table: np.ndarray) -> np.ndarray:

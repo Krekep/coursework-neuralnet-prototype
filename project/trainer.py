@@ -10,7 +10,7 @@ from project import network
 
 _default_shapes = [
     [10, 10, 10, 10, 10, 10],
-    [200, 200, 200],
+    [100, 100, 100],
     [32, 16, 8, 4],
     [4, 8, 16, 32],
     [10, 10],
@@ -87,6 +87,31 @@ def _create_random_network(inp: int,
     return net
 
 
+def _merge_table(x_data, y_data, size: int) -> list:
+    """
+    This method should be rewritten via native numpy functions.
+    Concatenate two arrays with shapes (n, a) and (n, b) to array (n, 2),
+    where first element have a size and second have b size.
+
+    Parameters
+    ----------
+    x_data: int
+        First table to merge
+    y_data: int
+        Second table to merge
+    size: int
+        General size
+    Returns
+    -------
+    result_table: list
+        Result of merge
+    """
+    result_data = []
+    for i in range(size):
+        result_data.append([x_data[i], y_data[i]])
+    return result_data
+
+
 def train(x_data: List, y_data: List) -> network.Network:
     """
     Choose and return neural network which present the minimal average absolute deviation
@@ -132,30 +157,35 @@ def train(x_data: List, y_data: List) -> network.Network:
                 data[test_piece][0]
                 train_data_y = np.vstack([train_data_y, data[test_piece][1]]) if train_data_y.size else \
                 data[test_piece][1]
-        train_data = np.hstack([train_data_x, train_data_y])
 
-        for nn in nets:
-            nn.SGD(training_data=train_data, epochs=50,
-                   mini_batch_size=max(len(train_data) // 10, 1), eta=0.02)
-        validation_data = np.hstack([data[validation_piece][0], data[validation_piece][1]])
-        for nn in nets:
-            nn.SGD(training_data=validation_data, epochs=15,
-                   mini_batch_size=max((len(data[validation_piece]) // 10), 1), eta=0.05)
+        train_data = [(x[:, np.newaxis], y) for x, y in zip(train_data_x, train_data_y)]
+        # print(f"Start training at {validation_piece} val. piece")
+        for i, nn in enumerate(nets):
+            nn.SGD(training_data=train_data, epochs=400,
+                   mini_batch_size=max(len(train_data) // 10, 1), eta=0.001)
+            # print(f"Success train with {validation_piece} val. piece, {i} network")
+        validation_data = [(x[:, np.newaxis], y) for x, y in zip(data[validation_piece][0], data[validation_piece][1])]
+        for i, nn in enumerate(nets):
+            nn.SGD(training_data=validation_data, epochs=100,
+                   mini_batch_size=max((len(data[validation_piece]) // 10), 1), eta=0.005)
+            # print(f"Success validate at {validation_piece} val. piece, {i} network")
 
-        # count the errors
-        temp = [0] * len(nets)
-        for i in range(len(nets)):
-            for example in range(len(test_data[0])):
-                if test_data[0][example].shape == _scalar_1.shape:
-                    predicted = nets[i].feedforward(float(test_data[0][example]))
-                else:
-                    predicted = nets[i].feedforward(test_data[0][example])
-                if predicted.shape == _scalar_2.shape:
-                    temp[i] += abs(float(predicted) - float(test_data[1][example]))
-                else:
-                    temp[i] += abs(sum(predicted) - sum(test_data[1][example]))
-            avg_errors[i] += temp[i] / len(test_data[0])
-
+    # count the errors
+    temp = [0] * len(nets)
+    for i, nn in enumerate(nets):
+        for example in range(len(test_data[0])):
+            if test_data[0][example].shape == _scalar_1.shape:
+                predicted = nn.feedforward(float(test_data[0][example]))
+            else:
+                predicted = nn.feedforward(test_data[0][example][:, np.newaxis])
+            if predicted.shape == _scalar_2.shape:
+                temp[i] += abs(float(predicted) ** 2 - float(test_data[1][example]) ** 2)
+            else:
+                temp[i] += abs(sum(predicted) - sum(test_data[1][example]))
+        avg_errors[i] += temp[i] / len(test_data[0])
+        # print(f"Success count error of {i} net with {validation_piece} val. piece")
+        # print("Go to next validate piece")
+    # print("Start compare")
     # find the best net
     result_net = nets[0]
     min_err = avg_errors[0]
@@ -163,5 +193,5 @@ def train(x_data: List, y_data: List) -> network.Network:
         if avg_errors[i] < min_err:
             min_err = avg_errors[i]
             result_net = nets[i]
-    print("Minimal average error is", min_err)
+    print("Minimal quad average error is", min_err)
     return result_net

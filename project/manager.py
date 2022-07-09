@@ -12,6 +12,7 @@ from project import utils
 from project import parser
 from project import network
 from project import trainer
+from project import eq_operations
 
 __all__ = [
     "create_ode_net",
@@ -97,6 +98,33 @@ def create_table_net(args: Namespace) -> None:
     _add_network_to_pool(nn, f"table{_count_of_nn}")
 
 
+def create_equation_net(args: Namespace) -> None:
+    """
+    Creating of neural network for solving equation
+
+    Parameters
+    ----------
+    args: argparse.Namespace
+        Parsed arguments
+
+    Returns
+    -------
+    None
+    """
+    variables = []
+    for key in args.variables:
+        l, r, s = map(float, args.variables[key].split(","))
+        record = (key, (l, r, s))
+        variables.append(record)
+
+    table = eq_operations.equation_solve(args.equation, variables)
+    x, y = utils.split_table(table)
+
+    nn = trainer.train(x, y)
+    nn.set_name(f"equation{_count_of_nn}")
+    _add_network_to_pool(nn, f"equation{_count_of_nn}")
+
+
 def build_plot(args: Namespace) -> None:
     """
     This method builds a graph based on the results of the neural network on the interval.
@@ -111,13 +139,37 @@ def build_plot(args: Namespace) -> None:
     None
     """
 
-    if args.network_name not in _network_pool.keys():
-        raise Exception("No neural network exist with this name!")
-
-    network = _network_pool[args.network_name]
+    network = get_network(args.network_name)
     interval = (float(args.interval[0]), float(args.interval[1]))
     step = float(args.step)
     utils.build_plot(network, interval, step)
+
+
+def export_solve(args: Namespace) -> None:
+    """
+    This method creates a point table with equation and variable values and exports them to a file.
+
+    Parameters
+    ----------
+    args: argparse.Namespace
+        Parsed arguments
+
+    Returns
+    -------
+    None
+    """
+
+    network = get_network(args.network_name)
+
+    result_path = f"{args.folder_path}/{args.network_name}_var_{len(args.variables)}.csv"
+
+    variables = []
+    for key in args.variables:
+        l, r, s = map(float, args.variables[key].split(","))
+        record = (key, (l, r, s))
+        variables.append(record)
+    table = utils.build_table(network, variables)
+    utils.export_csv_table(table, result_path)
 
 
 def save_network(args: Namespace) -> None:
@@ -135,16 +187,9 @@ def save_network(args: Namespace) -> None:
     None
     """
 
-    if args.network_name not in _network_pool.keys():
-        raise Exception("No neural network exist with this name!")
-
-    network = _network_pool[args.network_name]
+    network = get_network(args.network_name)
 
     result_path = f"{args.folder_path}/{args.network_name}.txt"
-    result_file = Path(result_path)
-
-    if not result_file.is_file():
-        open(result_file, "w")
 
     utils.export_network(result_path, network)
 
