@@ -10,7 +10,7 @@ from project import network
 
 _default_shapes = [
     [10, 10, 10, 10, 10, 10],
-    [100, 100, 100],
+    [80, 80, 80],
     [32, 16, 8, 4],
     [4, 8, 16, 32],
     [10, 10],
@@ -56,7 +56,9 @@ def _create_random_network(inp: int,
                            min_layers=1,
                            max_layers=5,
                            min_neurons=3,
-                           max_neurons=60
+                           max_neurons=60,
+                           reg_abs=0,
+                           reg_quad=0
                            ) -> network.Network:
     """
     Create random neural network from the passed parameters.
@@ -75,6 +77,10 @@ def _create_random_network(inp: int,
         Minimal count of neurons per layer
     max_neurons: int
         Maximal count of neurons per layer
+    reg_abs: int
+        L1 regularization
+    reg_quad: int
+        L2 regularization
     Returns
     -------
     net: network.Network
@@ -83,7 +89,7 @@ def _create_random_network(inp: int,
 
     layers = random.randint(min_layers, max_layers)
     shape = [inp] + [random.randint(min_neurons, max_neurons) for _ in range(layers)] + [out]
-    net = network.Network(shape)
+    net = network.Network(shape, reg_abs=0.01, reg_quad=0.01)
     return net
 
 
@@ -112,7 +118,7 @@ def _merge_table(x_data, y_data, size: int) -> list:
     return result_data
 
 
-def train(x_data: List, y_data: List) -> network.Network:
+def train(x_data: List, y_data: List, debug=False) -> network.Network:
     """
     Choose and return neural network which present the minimal average absolute deviation
 
@@ -122,11 +128,16 @@ def train(x_data: List, y_data: List) -> network.Network:
         List of inputs
     y_data: List
         List of outputs
+    debug: bool
+        Is debug output enabled
     Returns
     -------
     net: network.Network
         Best neural network for this dataset
     """
+    if debug:
+        print("Start train func")
+
     # determining the number of inputs and outputs of the neural network
     if type(x_data[0]) is np.ndarray:
         input_len = len(x_data[0])
@@ -139,12 +150,16 @@ def train(x_data: List, y_data: List) -> network.Network:
         output_len = 1
 
     # prepare neural networks and data
+    if debug:
+        print("Prepare neural networks and data")
     data, test_data = _prepare_cross_validation(x_data, y_data, 5)
     nets = []
     for i in range(len(_default_shapes)):
         temp_shape = [input_len] + _default_shapes[i] + [output_len]
-        nets.append(network.Network(temp_shape))
+        nets.append(network.Network(temp_shape, reg_abs=0.001, reg_quad=0.001))
     nets.append(_create_random_network(input_len, output_len))
+    if debug:
+        print("Success prepared")
 
     # train
     avg_errors = [0] * len(nets)
@@ -154,21 +169,24 @@ def train(x_data: List, y_data: List) -> network.Network:
         for test_piece in range(len(data)):
             if test_piece != validation_piece:
                 train_data_x = np.vstack([train_data_x, data[test_piece][0]]) if train_data_x.size else \
-                data[test_piece][0]
+                    data[test_piece][0]
                 train_data_y = np.vstack([train_data_y, data[test_piece][1]]) if train_data_y.size else \
-                data[test_piece][1]
+                    data[test_piece][1]
 
         train_data = [(x[:, np.newaxis], y) for x, y in zip(train_data_x, train_data_y)]
-        # print(f"Start training at {validation_piece} val. piece")
+        if debug:
+            print(f"Start training at {validation_piece} val. piece")
+
         for i, nn in enumerate(nets):
-            nn.SGD(training_data=train_data, epochs=400,
+            nn.SGD(training_data=train_data, epochs=100,
                    mini_batch_size=max(len(train_data) // 10, 1), eta=0.001)
-            # print(f"Success train with {validation_piece} val. piece, {i} network")
+            if debug:
+                print(f"Success train with {validation_piece} val. piece, {i} network")
         validation_data = [(x[:, np.newaxis], y) for x, y in zip(data[validation_piece][0], data[validation_piece][1])]
-        for i, nn in enumerate(nets):
-            nn.SGD(training_data=validation_data, epochs=100,
-                   mini_batch_size=max((len(data[validation_piece]) // 10), 1), eta=0.005)
-            # print(f"Success validate at {validation_piece} val. piece, {i} network")
+        # for i, nn in enumerate(nets):
+        #     nn.SGD(training_data=validation_data, epochs=250,
+        #            mini_batch_size=max((len(data[validation_piece]) // 10), 1), eta=0.005)
+        #     print(f"Success validate at {validation_piece} val. piece, {i} network")
 
     # count the errors
     temp = [0] * len(nets)
@@ -180,10 +198,13 @@ def train(x_data: List, y_data: List) -> network.Network:
                 predicted = nn.feedforward(test_data[0][example][:, np.newaxis])
             if predicted.shape == _scalar_2.shape:
                 temp[i] += abs(float(predicted) ** 2 - float(test_data[1][example]) ** 2)
+                # temp[i] += abs(float(predicted) - float(test_data[1][example]))
             else:
-                temp[i] += abs(sum(predicted) - sum(test_data[1][example]))
+                # temp[i] += abs(sum(predicted) - sum(test_data[1][example]))
+                temp[i] += abs(sum(predicted) ** 2 - sum(test_data[1][example]) ** 2)
         avg_errors[i] += temp[i] / len(test_data[0])
-        # print(f"Success count error of {i} net with {validation_piece} val. piece")
+        if debug:
+            print(f"Success count error of {i} net")
         # print("Go to next validate piece")
     # print("Start compare")
     # find the best net

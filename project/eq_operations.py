@@ -39,7 +39,7 @@ def _equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]])
         return [[eval(eq_calc)]]
 
 
-def equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]]) -> np.ndarray:
+def equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]], debug=False) -> np.ndarray:
     """
     Method for building a table with solutions of the given equation in points.
 
@@ -49,6 +49,8 @@ def equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]]) 
         Neural network for build table
     axes: list[tuple[str, tuple[float, float, float]]]
         List of variables with parameters (left, right and step).
+    debug: bool
+        Is debug output enabled.
     Returns
     -------
     table: np.ndarray
@@ -61,5 +63,6 @@ def equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]]) 
     for i in table:
         t.append([*i[1:], i[0]])
     res = np.array(t)
-    # utils.export_csv_table(res, "solveTable.csv")
+    if debug:
+        utils.export_csv_table(res, "solveTable.csv")
     return res

@@ -40,7 +40,7 @@ def parser_initialize() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(prog="python -m project")
     parser.set_defaults(func=lambda args: parser.error("too few arguments"))
-    subparsers = parser.add_subparsers(title="differential equation arguments", dest="")
+    subparsers = parser.add_subparsers(title="differential equation arguments", dest="subparser_name")
 
     # input ODE
     parser_ode = subparsers.add_parser(
@@ -63,6 +63,32 @@ def parser_initialize() -> argparse.ArgumentParser:
         help="y value in the 'a' point",
     )
     parser_ode.set_defaults(func=manager.create_ode_net)
+
+    # input system ODE
+    parser_system_ode = subparsers.add_parser(
+        "system-ode", help="Create neural net for system of ODEs. "
+                           "Input format --- *equation* *initial value*"
+    )
+    parser_system_ode.add_argument(
+        "n", type=int, help="Amount of equations"
+    )
+    parser_system_ode.add_argument(
+        "--interval",
+        metavar=("L", "R"),
+        dest="interval",
+        default=[0, 1],
+        type=int,
+        help="Interval of calculations [a, b]",
+        nargs=2
+    )
+    parser_system_ode.add_argument(
+        "--points",
+        dest="points",
+        default=10,
+        type=int,
+        help="Amount of points per interval",
+    )
+    parser_system_ode.set_defaults(func=manager.create_system_ode_net)
 
     # input table of values
     parser_table = subparsers.add_parser(
@@ -147,6 +173,7 @@ def parser_initialize() -> argparse.ArgumentParser:
         "--interval",
         metavar=("L", "R"),
         dest="interval",
+        type=float,
         default=[0, 1],
         help="Interval of calculations [a, b]",
         nargs=2
@@ -155,6 +182,7 @@ def parser_initialize() -> argparse.ArgumentParser:
         "--step",
         metavar="step",
         dest="step",
+        type=float,
         default=0.01,
         help="Function value calculation step",
     )
@@ -177,6 +205,15 @@ def parser_initialize() -> argparse.ArgumentParser:
         metavar="KEY=VAL"
     )
     parser_export_solution_table.set_defaults(func=manager.export_solve)
+
+    # debug
+    parser_debug = subparsers.add_parser("debug", help="Enable/disable debug output.")
+    parser_debug.add_argument(
+        "flag",
+        type=bool,
+        help="True --- enable debug output. False --- disable debug output",
+    )
+    parser_debug.set_defaults(func=manager.set_debug)
 
     # quit
     parser_quit = subparsers.add_parser("quit", help="Stop executable.")

@@ -128,11 +128,19 @@ def build_plot(network: network.Network, interval: Tuple[float, float], step: fl
     while a <= b:
         x.append(a)
         a += step
-    y = []
+
+    output_size = network.sizes[-1]
+    y = [0] * output_size
+    for i in range(output_size):
+        y[i] = []
+
     for i in x:
-        temp = float(network.feedforward(i))
-        y.append(temp)
-    plt.plot(x, y)
+        temp = network.feedforward(i)
+        for j in range(output_size):
+            y[j].append(temp[j])
+    for i, y_i in enumerate(y):
+        plt.plot(x, y_i, '-', label=f'{i}')
+    plt.legend()
     plt.show()
 
 

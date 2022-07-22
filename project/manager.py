@@ -13,17 +13,23 @@ from project import parser
 from project import network
 from project import trainer
 from project import eq_operations
+from project import de_operations
+from de_operations import system_ode
+from de_operations.system_ode import SystemODE
 
 __all__ = [
     "create_ode_net",
+    "create_system_ode_net",
     "create_table_net",
     "save_network",
     "load_network",
+    "set_debug",
     "quit_comm",
 ]
 
 _network_pool = {}
 _count_of_nn = 0
+_is_debug = False
 
 
 def create_ode_net(args: Namespace) -> None:
@@ -40,6 +46,32 @@ def create_ode_net(args: Namespace) -> None:
     None
     """
     pass
+
+
+def create_system_ode_net(args: Namespace, equations: list[list[str, str]]) -> None:
+    """
+    Creating of neural network for solving ODE system
+
+    Parameters
+    ----------
+    args: argparse.Namespace
+        Parsed arguments
+    equations: list[list[str, str]]
+        Input equations
+    Returns
+    -------
+    None
+    """
+    solver = SystemODE(_is_debug)
+    solver.prepare_equations(args.n, equations)
+    solver.solve(args.interval, args.points)
+    data = solver.build_table()
+
+    x, y = utils.split_table(data, args.n)
+
+    nn = trainer.train(x, y, debug=_is_debug)
+    nn.set_name(f"systemode{_count_of_nn}")
+    _add_network_to_pool(nn, f"systemode{_count_of_nn}")
 
 
 def _add_network_to_pool(nn, name):
@@ -93,7 +125,7 @@ def create_table_net(args: Namespace) -> None:
     table = utils.shuffle_table(table)
     x, y = utils.split_table(table)
 
-    nn = trainer.train(x, y)
+    nn = trainer.train(x, y, debug=_is_debug)
     nn.set_name(f"table{_count_of_nn}")
     _add_network_to_pool(nn, f"table{_count_of_nn}")
 
@@ -117,10 +149,10 @@ def create_equation_net(args: Namespace) -> None:
         record = (key, (l, r, s))
         variables.append(record)
 
-    table = eq_operations.equation_solve(args.equation, variables)
+    table = eq_operations.equation_solve(args.equation, variables, debug=_is_debug)
     x, y = utils.split_table(table)
 
-    nn = trainer.train(x, y)
+    nn = trainer.train(x, y, debug=_is_debug)
     nn.set_name(f"equation{_count_of_nn}")
     _add_network_to_pool(nn, f"equation{_count_of_nn}")
 
@@ -140,9 +172,7 @@ def build_plot(args: Namespace) -> None:
     """
 
     network = get_network(args.network_name)
-    interval = (float(args.interval[0]), float(args.interval[1]))
-    step = float(args.step)
-    utils.build_plot(network, interval, step)
+    utils.build_plot(network, args.interval, args.step)
 
 
 def export_solve(args: Namespace) -> None:
@@ -225,6 +255,23 @@ def load_network(args: Namespace) -> None:
             raise Exception(f"Error while loading the neural network {args.network_name}")
     else:
         raise Exception(f"Network with the name {args.network_name} already exist!")
+
+
+def set_debug(args: Namespace) -> None:
+    """
+    This method set debug value to passed value
+
+    Parameters
+    ----------
+    args: argparse.Namespace
+        Parsed arguments
+
+    Returns
+    -------
+    None
+    """
+    global _is_debug
+    _is_debug = args.flag
 
 
 def quit_comm(args: Namespace) -> None:

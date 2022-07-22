@@ -3,6 +3,7 @@
 1) добавлена l1, l2 регуляризации (???)
 2) добавлено строковое представление
 3) исправлена ошибка с встряхиваением таблицы, теперь она в самом деле перемешивается
+4) теперь может предсказывать несколько переменных сразу
 
 Модифицированный network.py с сайта и книги neuralnetworksanddeeplearning.com
 Модуль, реализующий алгоритм стохастического градиентного спуска
@@ -49,7 +50,7 @@ def linear(z: float) -> float:
     return z
 
 
-def linear_der(z: float) -> float:
+def linear_der(z: float):
     """
     Derivative of a linear function
     """
@@ -225,7 +226,14 @@ class Network(object):
         Возвращает вектор частных производных (\partial C_x) / (\partial a)
         целевой функции по активациям выходного слоя.
         """
-        return output_activations - y
+        if type(y) is np.ndarray:
+            input_len = len(y)
+        else:
+            input_len = 1
+        res = []
+        for i in range(input_len):
+            res.append(output_activations[i] - y[i])
+        return np.array(res)
 
     def sign(self, w):
         res = np.ndarray(w.shape)
