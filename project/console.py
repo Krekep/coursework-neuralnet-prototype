@@ -40,7 +40,7 @@ def run_console() -> None:
         stream = input(">>> ")
         try:
             args = _parser.parse_args(stream.split())
-            if args.subparser_name == "system_ode":
+            if args.subparser_name == "system-ode":
                 additional_arguments = parse_ode_equations(args.n)
                 args.func(args, additional_arguments)
             else:

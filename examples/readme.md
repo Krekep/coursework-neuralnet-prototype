@@ -38,7 +38,7 @@ export-solve equation0 /networks --vars x=-16.3,16.3,0.009
 ```bash
 debug true
 
-system_ode 3 --interval 0 50 --points 101
+system-ode 3 --interval 0 50 --points 101
 -0.1*y0*y1 y0(0)=2
 -0.1*y0*y1 y1(0)=1
 0.1*y0*y1 y2(0)=0
