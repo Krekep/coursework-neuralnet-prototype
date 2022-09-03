@@ -13,6 +13,7 @@ from scipy.integrate import solve_ivp
 from matplotlib import pyplot as plt
 
 from project.de_operations import utils
+from project.utils import export_csv_table
 
 __all__ = [
     "SystemODE"
@@ -89,10 +90,16 @@ class SystemODE(object):
         self._sol = solve_ivp(self._f, t_span, self._initial_values, t_eval=times)
         if self._debug:
             print("Success solve")
+
             plt.rc("font", size=24)
             plt.figure()
             t = self._sol.t
             y = self._sol.y
+
+            result_path = f"solveTable.csv"
+            t_for_export = t[:, np.newaxis]
+            export_csv_table(np.concatenate((t_for_export, y.T), axis=1), result_path)
+
             for i, y_i in enumerate(y):
                 plt.plot(t, y_i, '-', label=f'{i}')
             plt.legend()

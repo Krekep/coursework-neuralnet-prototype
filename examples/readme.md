@@ -29,18 +29,19 @@ load-from-file table0 /networks/table0.txt
 ```
 #### Third
 ```bash
-eq 2/(2*sin(x)**2)-1/2 --vars x=-13.2,13.2,0.01
+debug true
+eq x**2 --vars x=-4,4,0.01
 print-info equation0
-build-plot equation0 --interval -16.3 16.3 --step 0.005
-export-solve equation0 /networks --vars x=-16.3,16.3,0.009
+build-plot equation0 --interval -5 5 --step 0.005
+export-solve equation0 /networks --vars x=-4,4,0.01
 ```
 #### Fourth
 ```bash
 debug true
-
 system-ode 3 --interval 0 50 --points 101
 -0.1*y0*y1 y0(0)=2
 -0.1*y0*y1 y1(0)=1
 0.1*y0*y1 y2(0)=0
 build-plot systemode0 --interval 0 50 --step 0.01
+export-solve systemode0 ../networks --vars x=0,50,0.5
 ```

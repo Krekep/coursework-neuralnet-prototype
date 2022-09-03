@@ -5,16 +5,11 @@ Module representing the functions that the parser calls
 import sys
 from argparse import Namespace
 from pathlib import Path
-from typing import Tuple
 
-import project
 from project import utils
-from project import parser
-from project import network
+from project.networks import inetwork
 from project import trainer
 from project import eq_operations
-from project import de_operations
-from de_operations import system_ode
 from de_operations.system_ode import SystemODE
 
 __all__ = [
@@ -170,9 +165,10 @@ def build_plot(args: Namespace) -> None:
     -------
     None
     """
-
+    if _is_debug:
+        print("Start build plot")
     network = get_network(args.network_name)
-    utils.build_plot(network, args.interval, args.step)
+    utils.build_plot(network, args.interval, args.step, is_debug=_is_debug)
 
 
 def export_solve(args: Namespace) -> None:
@@ -291,7 +287,7 @@ def quit_comm(args: Namespace) -> None:
     sys.exit(0)
 
 
-def get_network(network_name: str) -> network.Network:
+def get_network(network_name: str) -> inetwork.INetwork:
     """
     Return neural network by name
 
@@ -302,7 +298,7 @@ def get_network(network_name: str) -> network.Network:
 
     Returns
     -------
-    network.Network
+    network.INetwork
         Resulting network
     """
 

@@ -2,18 +2,16 @@
 Provide some helpful functions
 """
 
-import random
 from typing import Tuple
 
-import project
-from project import network
+from project.networks import inetwork
 
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def export_network(path: str, net: network.Network) -> None:
+def export_network(path: str, net: inetwork.INetwork) -> None:
     """
     This method saves the neural network to a file
     using the pickle library functions.
@@ -22,7 +20,7 @@ def export_network(path: str, net: network.Network) -> None:
     ----------
     path: str
         Path to file
-    net: network.Network
+    net: network.INetwork
         Neural network to be saved
     Returns
     -------
@@ -32,7 +30,7 @@ def export_network(path: str, net: network.Network) -> None:
         pickle.dump(net, file)
 
 
-def import_network(path: str) -> network.Network:
+def import_network(path: str) -> inetwork.INetwork:
     """
     This method loads the neural network from a file
     using the pickle library functions.
@@ -44,7 +42,7 @@ def import_network(path: str) -> network.Network:
 
     Returns
     -------
-    net: network.Network
+    net: network.INetwork
         Neural network to be loaded
     """
     with open(path, "rb") as file:
@@ -106,18 +104,20 @@ def split_table(table: np.ndarray, len_answers=1) -> Tuple[np.ndarray, np.ndarra
     return x, y
 
 
-def build_plot(network: network.Network, interval: Tuple[float, float], step: float) -> None:
+def build_plot(network: inetwork.INetwork, interval: Tuple[float, float], step: float, is_debug=False) -> None:
     """
     Builds a two-dimensional graph on an interval with a given step.
 
     Parameters
     ----------
-    network: network.Network
+    network: network.INetwork
         Neural network for plotting
     interval: Tuple[float, float]
         The interval for which the plot will be built
     step: float
         Interval coverage step (number of points per interval)
+    is_debug: bool
+        Console debug output marker
     Returns
     -------
     None
@@ -128,29 +128,32 @@ def build_plot(network: network.Network, interval: Tuple[float, float], step: fl
     while a <= b:
         x.append(a)
         a += step
-
-    output_size = network.sizes[-1]
+    if is_debug:
+        print("End build x data")
+    output_size = network.get_output_size
     y = [0] * output_size
     for i in range(output_size):
         y[i] = []
 
     for i in x:
-        temp = network.feedforward(i)
+        temp = network.feedforward(np.array([[i]]))
         for j in range(output_size):
-            y[j].append(temp[j])
+            y[j].append(temp[0][j].numpy())
+    if is_debug:
+        print("End build y data from network")
     for i, y_i in enumerate(y):
         plt.plot(x, y_i, '-', label=f'{i}')
     plt.legend()
     plt.show()
 
 
-def _build_table(network: network.Network, axes: list[tuple[str, tuple[float, float, float]]], acc=None) -> list:
+def _build_table(network: inetwork.INetwork, axes: list[tuple[str, tuple[float, float, float]]], acc=None) -> list:
     """
     Supporting method for taken network answer.
 
     Parameters
     ----------
-    network: network.Network
+    network: network.INetwork
         Neural network for build table
     axes: list[tuple[str, tuple[float, float, float]]]
         List of variables with parameters (left, right and step).
@@ -180,17 +183,17 @@ def _build_table(network: network.Network, axes: list[tuple[str, tuple[float, fl
         return solution_table
     elif acc is not None:
         temp = network.feedforward(acc[:, np.newaxis])
-        res = float(temp)
-        return [[res]]
+        res = temp[0].numpy().tolist()
+        return [res]
 
 
-def build_table(network: network.Network, axes: list[tuple[str, tuple[float, float, float]]]) -> list:
+def build_table(network: inetwork.INetwork, axes: list[tuple[str, tuple[float, float, float]]]) -> list:
     """
     Builds a solution table on the interval given for each variable with the given step.
 
     Parameters
     ----------
-    network: network.Network
+    network: network.INetwork
         Neural network for build table
     axes: list[tuple[str, tuple[float, float, float]]]
         List of variables with parameters (left, right and step).
@@ -203,7 +206,7 @@ def build_table(network: network.Network, axes: list[tuple[str, tuple[float, flo
     """
     table = _build_table(network, axes)
     res = []
-    k = network.sizes[-1]
+    k = network.get_output_size
     for i in table:
         res.append([*i[k:], *i[:k]])
     return res

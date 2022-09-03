@@ -3,6 +3,8 @@ from math import *
 
 from project import utils
 
+from matplotlib import pyplot as plt
+
 
 def _equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]]) -> list:
     """
@@ -26,7 +28,7 @@ def _equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]])
         solution_table = []
         i = curr_axis[1][0]
         while i <= curr_axis[1][1]:
-            teq = eq.replace(curr_axis[0], str(i))
+            teq = eq.replace(curr_axis[0], "(" + str(i) + ")")
             res = _equation_solve(teq, axes)
             for temp in res:
                 temp.append(i)
@@ -65,4 +67,15 @@ def equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]], 
     res = np.array(t)
     if debug:
         utils.export_csv_table(res, "solveTable.csv")
+
+        if len(axes) == 1:
+            plt.rc("font", size=24)
+            plt.figure()
+            t = res[:, :1]
+            y = res[:, 1:].T
+
+            for i, y_i in enumerate(y):
+                plt.plot(t, y_i, '-', label=f'{i}')
+            plt.legend()
+            plt.show()
     return res
