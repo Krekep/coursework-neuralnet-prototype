@@ -106,6 +106,12 @@ def parser_initialize() -> argparse.ArgumentParser:
         default=None,
         help="Type of DE in table",
     )
+    parser_table.add_argument(
+        "--ans",
+        dest="ans_len",
+        default=1,
+        help="Length of answer vector for input vector (count of functions)",
+    )
     parser_table.set_defaults(func=manager.create_table_net)
 
     # input equation

@@ -43,7 +43,7 @@ def create_ode_net(args: Namespace) -> None:
     pass
 
 
-def create_system_ode_net(args: Namespace, equations: list[list[str, str]]) -> None:
+def create_system_ode_net(args: Namespace, equations: list[list[str]]) -> None:
     """
     Creating of neural network for solving ODE system
 
@@ -51,7 +51,7 @@ def create_system_ode_net(args: Namespace, equations: list[list[str, str]]) -> N
     ----------
     args: argparse.Namespace
         Parsed arguments
-    equations: list[list[str, str]]
+    equations: list[list[str]]
         Input equations
     Returns
     -------
@@ -62,7 +62,7 @@ def create_system_ode_net(args: Namespace, equations: list[list[str, str]]) -> N
     solver.solve(args.interval, args.points)
     data = solver.build_table()
 
-    x, y = utils.split_table(data, args.n)
+    x, y = utils.split_table_by_ans(data, args.n)
 
     nn = trainer.train(x, y, debug=_is_debug)
     nn.set_name(f"systemode{_count_of_nn}")
@@ -118,7 +118,7 @@ def create_table_net(args: Namespace) -> None:
 
     table = utils.import_csv_table(result_path)
     table = utils.shuffle_table(table)
-    x, y = utils.split_table(table)
+    x, y = utils.split_table_by_ans(table, args.ans_len)
 
     nn = trainer.train(x, y, debug=_is_debug)
     nn.set_name(f"table{_count_of_nn}")
@@ -145,7 +145,7 @@ def create_equation_net(args: Namespace) -> None:
         variables.append(record)
 
     table = eq_operations.equation_solve(args.equation, variables, debug=_is_debug)
-    x, y = utils.split_table(table)
+    x, y = utils.split_table_by_ans(table)
 
     nn = trainer.train(x, y, debug=_is_debug)
     nn.set_name(f"equation{_count_of_nn}")

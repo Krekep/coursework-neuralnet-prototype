@@ -84,9 +84,9 @@ def export_csv_table(table: np.ndarray, path: str) -> None:
     np.savetxt(path, table, delimiter=",")
 
 
-def split_table(table: np.ndarray, len_answers=1) -> Tuple[np.ndarray, np.ndarray]:
+def split_table_by_ans(table: np.ndarray, len_answers=1) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Splitting the original table into tables of variables and answers.
+    Splitting the original table into tables of variables and answers by length of answer.
 
     Parameters
     ----------
@@ -101,6 +101,26 @@ def split_table(table: np.ndarray, len_answers=1) -> Tuple[np.ndarray, np.ndarra
     """
     x = table[:, :-len_answers]
     y = table[:, -len_answers:]
+    return x, y
+
+
+def split_table_by_inp(table: np.ndarray, len_input=1) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Splitting the original table into tables of variables and answers by length of input.
+
+    Parameters
+    ----------
+    table: np.ndarray
+        Input table
+    len_input: int
+        Amount of input variables (in columns)
+    Returns
+    -------
+    tables: Tuple[np.ndarray, np.ndarray]
+        Pair of inputs and results tables
+    """
+    x = table[:, :len_input]
+    y = table[:, len_input:]
     return x, y
 
 
@@ -139,6 +159,8 @@ def build_plot(network: inetwork.INetwork, interval: Tuple[float, float], step: 
         temp = network.feedforward(np.array([[i]]))
         for j in range(output_size):
             y[j].append(temp[0][j].numpy())
+        if i % (len(x) // 10) == 0 and is_debug:
+            print("Build y data is ready ---", i % (len(x) // 10))
     if is_debug:
         print("End build y data from network")
     for i, y_i in enumerate(y):

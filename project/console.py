@@ -9,7 +9,7 @@ __all__ = ["run_console"]
 _parser = parser.parser_initialize()
 
 
-def parse_ode_equations(n: int) -> list[list[str, str]]:
+def parse_ode_equations(n: int) -> list[list[str]]:
     """
     Parse input string to pair of equations and initial value
 
@@ -19,7 +19,7 @@ def parse_ode_equations(n: int) -> list[list[str, str]]:
         Count of equations
     Returns
     -------
-    equations: list[list[str, str]]
+    equations: list[list[str]]
         Parsed input
     """
     res = []

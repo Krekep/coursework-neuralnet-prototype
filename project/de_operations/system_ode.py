@@ -48,7 +48,7 @@ class SystemODE(object):
             res.append(self._func[i](*y))
         return res
 
-    def prepare_equations(self, n: int, equations: list[list[str, str]]) -> None:
+    def prepare_equations(self, n: int, equations: list[list[str]]) -> None:
         """
         Parse passed equations and build functions for them
 
@@ -56,8 +56,8 @@ class SystemODE(object):
         ----------
         n: int
             System size
-        equations: list[list[str, str]]
-            Equations of system
+        equations: list[list[str]]
+            Equations of system. Equation yi' = f(x, yj...) and Cauchy initial value yi(x0) = yi0
         """
         self._size = n
         self._func_arguments = ""
@@ -74,7 +74,7 @@ class SystemODE(object):
             self._func.append(FunctionType(code.co_consts[0], globals(), "temp"))
             self._initial_values.append(utils.extract_iv(cond[1])[1])
 
-    def solve(self, interval: tuple[int, int], points: int) -> None:
+    def solve(self, interval: tuple[float, float], points: int) -> None:
         """
         Solve given equations
 
@@ -87,7 +87,7 @@ class SystemODE(object):
         """
         t_span = np.array([interval[0], interval[1]])
         times = np.linspace(t_span[0], t_span[1], points)
-        self._sol = solve_ivp(self._f, t_span, self._initial_values, t_eval=times)
+        self._sol = solve_ivp(self._f, t_span, self._initial_values, t_eval=times, method="LSODA")
         if self._debug:
             print("Success solve")
 
