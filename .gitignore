@@ -186,3 +186,4 @@ fabric.properties
 resource
 testlaunches/solution_tables
 testlaunches/archive
+*.xlsx

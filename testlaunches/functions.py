@@ -58,7 +58,7 @@ def S_ODE_1_solution(x, size=2):
     return 10 * np.cos(10 * x), np.sin(10 * x)
 
 
-def S_ODE_2_table(step: float, interval: tuple[float, float] = (0, np.pi)):
+def S_ODE_2_table(points_array: list, interval: tuple[float, float] = (0, np.pi)):
     """
     y0' = y1 * y2 y0(0)=0
     y1' = -y0 * y2 y1(0)=0
@@ -75,7 +75,7 @@ def S_ODE_2_table(step: float, interval: tuple[float, float] = (0, np.pi)):
 
     solver = SystemODE()
     solver.prepare_equations(size, prepared_sode)
-    solver.solve(interval, int((interval[1] - interval[0]) / step))
+    solver.solve(interval, points_array)
     res_table = solver.build_table()
     return res_table
 
@@ -84,13 +84,29 @@ def ST_LF_ODE_1_solution(x):
     """ solution function for stiff y' + 15y = 0, y(0) = 1 """
     return np.power(np.e, -15 * x)
 
+# def ST_LH_ODE_2_solution(x):
+#     """ solution function for stiff y'' + 1001y' + 1000y = 0, y(0) = 1, y'(0) = 0 """
+#     return 1/999 * np.power(np.e, -1000 * x) * (1000 * np.power(np.e, 999 * x) - 1)
 
-def ST_LH_ODE_2_solution(x):
+
+def ST_LH_ODE_2_table(points_array: list, interval: tuple[float, float] = (0.1, 1)):
     """ solution function for stiff y'' + 1001y' + 1000y = 0, y(0) = 1, y'(0) = 0 """
-    return 1/999 * np.power(np.e, -1000 * x) * (1000 * np.power(np.e, 999 * x) - 1)
+    size = 2
+    sode = "y1 y0(0)=1\n" \
+           "-1001*y1-1000*y0 y1(0)=0"
+    temp = sode.split("\n")
+    prepared_sode = []
+    for eq in temp:
+        prepared_sode.append(eq.split(" "))
+
+    solver = SystemODE()
+    solver.prepare_equations(size, prepared_sode)
+    solver.solve(interval, points_array)
+    res_table = solver.build_table([0])
+    return res_table
 
 
-def ST_S_ODE_3_table(step: float, interval: tuple[float, float] = (0, 40)):
+def ST_S_ODE_3_table(points_array: list, interval: tuple[float, float] = (0, 40)):
     def roberts_deriv(t, y):
         """ODEs for Robertson's chemical reaction system."""
         x, y, z = y
@@ -101,7 +117,7 @@ def ST_S_ODE_3_table(step: float, interval: tuple[float, float] = (0, 40)):
 
     # Initial and final times.
     t0, tf = interval[0], interval[1]
-    times = np.linspace(t0, tf, int((tf - t0) / step))
+    times = points_array
     # Initial conditions: [X] = 1; [Y] = [Z] = 0.
     y0 = 1, 0, 0
     # Solve, using a method resilient to stiff ODEs.

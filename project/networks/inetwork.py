@@ -26,6 +26,7 @@ class INetwork(object):
                                   run_eagerly=False)
         self._input_size = input_size
         self._output_size = output_size
+        self._shape = block_size
         self._train_history = None
         self._normalization = normalization
         self._name = name
@@ -101,6 +102,19 @@ class INetwork(object):
     @property
     def get_name(self) -> str:
         return self._name
+
+    @property
+    def get_shape(self) -> list[int]:
+        """
+        Get shape for current network
+
+        Returns
+        -------
+        shape: list[int]
+            Network shape
+        """
+
+        return self._shape
 
     @property
     def get_input_size(self) -> int:

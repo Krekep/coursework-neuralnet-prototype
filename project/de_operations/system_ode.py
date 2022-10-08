@@ -4,6 +4,7 @@ Provide class for solve system of ODE
 
 import types
 from types import FunctionType
+from typing import Union
 
 import numpy as np
 import scipy
@@ -74,7 +75,7 @@ class SystemODE(object):
             self._func.append(FunctionType(code.co_consts[0], globals(), "temp"))
             self._initial_values.append(utils.extract_iv(cond[1])[1])
 
-    def solve(self, interval: tuple[float, float], points: int) -> None:
+    def solve(self, interval: tuple[float, float], points: Union[int, list]) -> None:
         """
         Solve given equations
 
@@ -82,11 +83,14 @@ class SystemODE(object):
         ----------
         interval: tuple[int, int]
             Decision interval
-        points: int
-            Amount of points per interval
+        points: int | list
+            Amount of points per interval (or list of points)
         """
         t_span = np.array([interval[0], interval[1]])
-        times = np.linspace(t_span[0], t_span[1], points)
+        if isinstance(points, list):
+            times = points
+        else:
+            times = np.linspace(t_span[0], t_span[1], points)
         self._sol = solve_ivp(self._f, t_span, self._initial_values, t_eval=times, method="LSODA")
         if self._debug:
             print("Success solve")
@@ -105,9 +109,14 @@ class SystemODE(object):
             plt.legend()
             plt.show()
 
-    def build_table(self) -> np.ndarray:
+    def build_table(self, eq_num: list = None) -> np.ndarray:
         """
         Builds a table for solution
+
+        Parameters
+        ----------
+        eq_num : list
+            For which equation in system build table
 
         Returns
         -------
@@ -118,8 +127,14 @@ class SystemODE(object):
         if self._sol is None:
             return np.array([])
 
-        t = self._sol.t
-        y = self._sol.y
-        res = np.vstack([t, *y])
-        res = res.T
+        if eq_num is None:
+            t = self._sol.t
+            y = self._sol.y
+            res = np.vstack([t, *y])
+            res = res.T
+        else:
+            t = self._sol.t
+            y = self._sol.y[eq_num, :]
+            res = np.vstack([t, *y])
+            res = res.T
         return res

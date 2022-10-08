@@ -76,7 +76,7 @@ def _normalize_array(x: np.ndarray) -> tuple[np.ndarray, float]:
 
 
 def train(x_data: np.ndarray, y_data: np.ndarray, **kwargs) -> Union[
-    inetwork.INetwork, tuple[inetwork.INetwork, tf.keras.callbacks.History]
+    inetwork.INetwork, tuple[list[inetwork.INetwork], tf.keras.callbacks.History]
 ]:
     """
     Choose and return neural network which present the minimal average absolute deviation.
@@ -139,7 +139,7 @@ def train(x_data: np.ndarray, y_data: np.ndarray, **kwargs) -> Union[
         curr_net = inetwork.INetwork(input_size=input_len, block_size=shape, output_size=output_len, rate=args["eps"],
                                      optimizer=args["optimizer"], loss_func=args["loss_func"], metrics=args["metrics"],
                                      normalization=norm_coff, name=f"net{args['name_salt']}_{str_shape}",
-                                     debug=args["debug"])
+                                     is_debug=args["debug"])
         nets.append(curr_net)
     if args["use_rand_net"]:
         rand_net = _create_random_network(input_len, output_len, args=args)
@@ -157,16 +157,16 @@ def train(x_data: np.ndarray, y_data: np.ndarray, **kwargs) -> Union[
         history[i] = nn.train(x_data, y_data, epochs=args["epochs"], validation_split=args["validation_split"],
                               callbacks=tf.keras.callbacks.CSVLogger(f"log_{nn.get_name}.csv",
                                                                      separator=',', append=False), verbose=verb)
-    print("Success train")
     result_net = nets[0]
     min_err = history[0].history["loss"][-1]
     for i in range(1, len(nets)):
         if history[i].history["loss"][-1] < min_err:
             min_err = history[i].history["loss"][-1]
             result_net = nets[i]
-    print(f"Minimal quad average error is {min_err} {args['name_salt']}")
+    if args["debug"]:
+        print(f"Minimal quad average error is {min_err} {args['name_salt']}")
     if args["experiments"]:
-        return result_net, history
+        return nets, history
     return result_net
 
 
