@@ -2,7 +2,7 @@
 Provide some helpful functions
 """
 
-from typing import Tuple
+from typing import Tuple, List
 
 from project.networks import inetwork
 
@@ -169,7 +169,7 @@ def build_plot(network: inetwork.INetwork, interval: Tuple[float, float], step: 
     plt.show()
 
 
-def _build_table(network: inetwork.INetwork, axes: list[tuple[str, tuple[float, float, float]]], acc=None) -> list:
+def _build_table(network: inetwork.INetwork, axes: List[Tuple[str, Tuple[float, float, float]]], acc=None) -> List:
     """
     Supporting method for taken network answer.
 
@@ -209,7 +209,7 @@ def _build_table(network: inetwork.INetwork, axes: list[tuple[str, tuple[float, 
         return [res]
 
 
-def build_table(network: inetwork.INetwork, axes: list[tuple[str, tuple[float, float, float]]]) -> list:
+def build_table(network: inetwork.INetwork, axes: List[Tuple[str, Tuple[float, float, float]]]) -> List:
     """
     Builds a solution table on the interval given for each variable with the given step.
 

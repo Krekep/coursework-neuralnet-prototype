@@ -1,12 +1,13 @@
 import numpy as np
 from scipy import stats
 from testlaunches.functions import *
+from typing import Union, List, Tuple
 
 
 rng = np.random.default_rng()
 
 
-def prepare_interval(interval: tuple[float, float], step: float, distr="uniform"):
+def prepare_interval(interval: Tuple[float, float], step: float, distr="uniform"):
     a = interval[0]
     b = interval[1]
 
@@ -25,7 +26,7 @@ def prepare_interval(interval: tuple[float, float], step: float, distr="uniform"
     return res
 
 
-def prepare_uniform_interval(interval: tuple[float, float], step: float):
+def prepare_uniform_interval(interval: Tuple[float, float], step: float):
     a = interval[0]
     b = interval[1]
     res = []

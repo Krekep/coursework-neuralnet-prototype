@@ -3,6 +3,7 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
 from project.de_operations.system_ode import SystemODE
+from typing import Union, List, Tuple
 
 
 def LF_ODE_1_solution(x):
@@ -58,7 +59,7 @@ def S_ODE_1_solution(x, size=2):
     return 10 * np.cos(10 * x), np.sin(10 * x)
 
 
-def S_ODE_2_table(points_array: list, interval: tuple[float, float] = (0, np.pi)):
+def S_ODE_2_table(points_array: list, interval: Tuple[float, float] = (0, np.pi)):
     """
     y0' = y1 * y2 y0(0)=0
     y1' = -y0 * y2 y1(0)=0
@@ -84,12 +85,13 @@ def ST_LF_ODE_1_solution(x):
     """ solution function for stiff y' + 15y = 0, y(0) = 1 """
     return np.power(np.e, -15 * x)
 
+# Python cant calculate this
 # def ST_LH_ODE_2_solution(x):
 #     """ solution function for stiff y'' + 1001y' + 1000y = 0, y(0) = 1, y'(0) = 0 """
 #     return 1/999 * np.power(np.e, -1000 * x) * (1000 * np.power(np.e, 999 * x) - 1)
 
 
-def ST_LH_ODE_2_table(points_array: list, interval: tuple[float, float] = (0.1, 1)):
+def ST_LH_ODE_2_table(points_array: list, interval: Tuple[float, float] = (0.1, 1)):
     """ solution function for stiff y'' + 1001y' + 1000y = 0, y(0) = 1, y'(0) = 0 """
     size = 2
     sode = "y1 y0(0)=1\n" \
@@ -106,7 +108,7 @@ def ST_LH_ODE_2_table(points_array: list, interval: tuple[float, float] = (0.1, 
     return res_table
 
 
-def ST_S_ODE_3_table(points_array: list, interval: tuple[float, float] = (0, 40)):
+def ST_S_ODE_3_table(points_array: list, interval: Tuple[float, float] = (0, 40)):
     def roberts_deriv(t, y):
         """ODEs for Robertson's chemical reaction system."""
         x, y, z = y

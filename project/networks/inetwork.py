@@ -8,6 +8,8 @@ from project.networks.densenet import DenseNet
 from project.networks import losses
 from project.networks.losses import MyMSE
 
+from typing import List
+
 
 class INetwork(object):
     """
@@ -104,13 +106,13 @@ class INetwork(object):
         return self._name
 
     @property
-    def get_shape(self) -> list[int]:
+    def get_shape(self) -> List[int]:
         """
         Get shape for current network
 
         Returns
         -------
-        shape: list[int]
+        shape: List[int]
             Network shape
         """
 

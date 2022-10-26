@@ -4,7 +4,7 @@ Provide class for solve system of ODE
 
 import types
 from types import FunctionType
-from typing import Union
+from typing import Union, List, Tuple
 
 import numpy as np
 import scipy
@@ -49,7 +49,7 @@ class SystemODE(object):
             res.append(self._func[i](*y))
         return res
 
-    def prepare_equations(self, n: int, equations: list[list[str]]) -> None:
+    def prepare_equations(self, n: int, equations: List[List[str]]) -> None:
         """
         Parse passed equations and build functions for them
 
@@ -75,7 +75,7 @@ class SystemODE(object):
             self._func.append(FunctionType(code.co_consts[0], globals(), "temp"))
             self._initial_values.append(utils.extract_iv(cond[1])[1])
 
-    def solve(self, interval: tuple[float, float], points: Union[int, list]) -> None:
+    def solve(self, interval: Tuple[float, float], points: Union[int, list]) -> None:
         """
         Solve given equations
 

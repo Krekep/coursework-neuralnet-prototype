@@ -2,7 +2,7 @@
 Module for training neural networks
 """
 import random
-from typing import Union
+from typing import Union, Tuple, List
 
 import numpy as np
 import tensorflow as tf
@@ -62,21 +62,25 @@ def _create_random_network(inp: int,
     return net
 
 
-def _normalize_two_array(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
-    m = max(np.amax(x), np.amax(y))
+def _normalize_two_array(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray, float]:
+    m = max(abs(np.amax(x)), abs(np.amax(y)))
+    if m < 1:
+        m = 1
     x = x / m
     y = y / m
     return x, y, m
 
 
-def _normalize_array(x: np.ndarray) -> tuple[np.ndarray, float]:
-    m = np.amax(x)
+def _normalize_array(x: np.ndarray) -> Tuple[np.ndarray, float]:
+    m = abs(np.amax(x))
+    if m < 1:
+        m = 1
     x = x / m
     return x, m
 
 
 def train(x_data: np.ndarray, y_data: np.ndarray, **kwargs) -> Union[
-    inetwork.INetwork, tuple[list[inetwork.INetwork], tf.keras.callbacks.History]
+    inetwork.INetwork, Tuple[List[inetwork.INetwork], tf.keras.callbacks.History]
 ]:
     """
     Choose and return neural network which present the minimal average absolute deviation.
@@ -128,7 +132,8 @@ def train(x_data: np.ndarray, y_data: np.ndarray, **kwargs) -> Union[
     # prepare data (normalize)
     norm_coff = 1
     if args["normalize"]:
-        y_data, norm_coff = _normalize_array(x_data)
+        x_data, _ = _normalize_array(x_data)
+        y_data, norm_coff = _normalize_array(y_data)
 
     # prepare neural networks
     if args["debug"]:

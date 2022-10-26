@@ -2,8 +2,10 @@
 Provide some helpful functions for DE
 """
 
+from typing import Tuple
 
-def extract_iv(eq: str) -> tuple[float, float]:
+
+def extract_iv(eq: str) -> Tuple[float, float]:
     """
     Extract initial value for Cauchy problem
 
