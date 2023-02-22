@@ -3,17 +3,20 @@ from tensorflow import keras
 from keras import layers
 
 from networks import activations
+from networks.config_format import LAYER_DICT_NAMES
 
 
 class MyDense(keras.layers.Layer):
-    def __init__(self,
-                 input_dim=32,
-                 units=32,
-                 activation_func=tf.keras.activations.linear,
-                 weight_initializer=tf.random_normal_initializer(),
-                 bias_initializer=tf.random_normal_initializer(),
-                 is_debug=False,
-                 **kwargs):
+    def __init__(
+        self,
+        input_dim=32,
+        units=32,
+        activation_func=tf.keras.activations.linear,
+        weight_initializer=tf.random_normal_initializer(),
+        bias_initializer=tf.random_normal_initializer(),
+        is_debug=False,
+        **kwargs,
+    ):
         activation_names = None
         decorator_params = None
         if "activation_names" in kwargs.keys():
@@ -23,6 +26,9 @@ class MyDense(keras.layers.Layer):
         if "decorator_params" in kwargs.keys():
             decorator_params = kwargs.get("decorator_params")
             kwargs.pop("decorator_params")
+
+        if not isinstance(decorator_params, list):
+            decorator_params = [decorator_params]
 
         if input_dim == 0 or units == 0:
             raise "Layer cannot have zero inputs or zero size"
@@ -63,11 +69,14 @@ class MyDense(keras.layers.Layer):
     def get_config(self):
         config = super(MyDense, self).get_config()  # get config of the base Layer class
 
-        config.update({'units': self.units,
-                       'activation_func': tf.keras.activations.serialize(self.activation_func),
-                       'weight': tf.keras.initializers.serialize(self.weight_initializer),
-                       'biases': tf.keras.initializers.serialize(self.bias_initializer),
-                       })
+        config.update(
+            {
+                "units": self.units,
+                "activation_func": tf.keras.activations.serialize(self.activation_func),
+                "weight": tf.keras.initializers.serialize(self.weight_initializer),
+                "biases": tf.keras.initializers.serialize(self.bias_initializer),
+            }
+        )
         # you need to serialise the callable activation function
 
         return config
@@ -76,33 +85,36 @@ class MyDense(keras.layers.Layer):
         w = self.w.value().numpy()
         b = self.b.value().numpy()
         res = {
-            "shape": self.units,
-            "inp_size": self.input_dim,
-            "weights": w.tolist(),
-            "biases": b.tolist(),
-            "layer_type": type(self).__name__,
-            "dtype": w.dtype.name,
-            "activation": self.activation_func.__name__ if self.activation_name is None else self.activation_name
+            LAYER_DICT_NAMES["shape"]: self.units,
+            LAYER_DICT_NAMES["inp_size"]: self.input_dim,
+            LAYER_DICT_NAMES["weights"]: w.tolist(),
+            LAYER_DICT_NAMES["biases"]: b.tolist(),
+            LAYER_DICT_NAMES["layer_type"]: type(self).__name__,
+            LAYER_DICT_NAMES["dtype"]: w.dtype.name,
+            LAYER_DICT_NAMES["activation"]: self.activation_func.__name__
+            if self.activation_name is None
+            else self.activation_name,
         }
 
         if self.activation_name in activations._decorated_activation:
-            res.update({"decorator_params": self.decorator_params})
+            res.update({LAYER_DICT_NAMES["decorator_params"]: self.decorator_params})
 
         return res
 
     def from_dict(self, config):
-        w = config["weights"]
-        b = config["biases"]
-        act = config["activation"]
+        w = config[LAYER_DICT_NAMES["weights"]]
+        b = config[LAYER_DICT_NAMES["biases"]]
+        act = config[LAYER_DICT_NAMES["activation"]]
         self.w = tf.Variable(
-            initial_value=w, dtype=config["dtype"],
+            initial_value=w,
+            dtype=config[LAYER_DICT_NAMES["dtype"]],
             trainable=True,
         )
         self.b = tf.Variable(
-            initial_value=b, dtype=config["dtype"], trainable=True
+            initial_value=b, dtype=config[LAYER_DICT_NAMES["dtype"]], trainable=True
         )
         if act in activations._decorated_activation:
-            params = config["decorator_params"]
+            params = config[LAYER_DICT_NAMES["decorator_params"]]
             self.activation_func = activations.deserialize(act)(params)
             self.activation_name = act
             self.decorator_params = params
@@ -113,4 +125,3 @@ class MyDense(keras.layers.Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
-

@@ -1,1 +1,0 @@
-{"name": "net", "activation_func": "sigmoid", "out_activation": "linear", "layer_0": {"shape": 1, "inp_size": 1, "weights": [[-0.012837660498917103]], "dtype": "float32"}}

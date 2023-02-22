@@ -1,59 +1,117 @@
 import numpy as np
+
+from networks.config_format import HEADER_OF_FILE
+from networks.imodel import IModel
+
 import tensorflow as tf
 from tensorflow import keras
 
 from networks import activations
-from networks.densenet import DenseNet
+from networks.topology.densenet import DenseNet
 from networks.ilayer import ILayer
+from networks.config_format import HEADER_OF_FILE
 from networks.imodel import IModel
 from networks.layers.dense import MyDense
 from tests.utils import init_params
 
-act_func, weight_initializer1, bias_initializer = init_params(act_name='linear', weight_name='ones',
-                                                              bias_name='zeros')
-weight_initializer2 = init_params(weight_name='zeros')[0]
-prec_act = activations.perceptron_threshold
-
-layer = ILayer(inp_size=1, shape=1, activation=act_func, weight=weight_initializer1, bias=bias_initializer)
-layer1 = MyDense(input_dim=3, units=1, activation_func=act_func, weight_initializer=weight_initializer1, bias_initializer=bias_initializer)
-
-print(layer.get_config())
-print(layer.get_weights())
-
-nn = IModel.create_neuron(1, 1, [1], activation=prec_act(1), weight=weight_initializer1, biases=bias_initializer, activation_names=["perceptron_threshold"], decorator_params=[1])
-
-nn1 = IModel.create_neuron(1, 1, [1], activation=prec_act(2), weight=weight_initializer2, biases=bias_initializer, activation_names=["perceptron_threshold"], decorator_params=[2])
-
-densenet = DenseNet(input_size=1, block_size=[1], output_size=1)
-print(densenet.get_config())
-
-nn.to_dict("nn.txt")
-nn1.to_dict("nn1_before.txt")
-
-nn1.from_dict("nn.txt")
-
-nn1.to_dict("nn1_after.txt")
-
-# print("**** KERAS OBJECTS ****")
+# act_func, weight_initializer1, bias_initializer = init_params(act_name='linear', weight_name='ones',
+#                                                               bias_name='zeros')
+# weight_initializer2 = init_params(weight_name='zeros')[0]
+# prec_act = activations.perceptron_threshold
 #
-# kl = keras.layers.Dense(4)
-# print(kl.get_config())
-# print(kl.get_weights())
+# layer = ILayer(inp_size=1, shape=1, activation=act_func, weight=weight_initializer1, bias=bias_initializer)
+# layer1 = MyDense(input_dim=3, units=1, activation_func=act_func, weight_initializer=weight_initializer1, bias_initializer=bias_initializer)
 #
-# k = keras.Sequential()
-# k.add(keras.layers.Dense(3, input_shape=(4,)))
-# # Afterwards, we do automatic shape inference:
-# k.add(layer1)
-# print(k.get_config())
-# print(k.get_weights())
+# print(layer.get_config())
+# print(layer.get_weights())
 #
-# # k.save_weights("test.h5")
+# nn = IModel.create_neuron(1, 1, [1], activation=prec_act(1), weight=weight_initializer1, biases=bias_initializer, activation_names=["perceptron_threshold"], decorator_params=[1])
 #
-# k2 = keras.Sequential()
-# k2.add(keras.layers.Dense(3, input_shape=(4,)))
-# # Afterwards, we do automatic shape inference:
-# k2.add(keras.layers.Dense(1, input_shape=(3,)))
-# print(k2.get_config())
-# print(k2.get_weights())
-# k2.load_weights("test.h5")
-# print(k2.get_weights())
+# nn1 = IModel.create_neuron(1, 1, [1], activation=prec_act(2), weight=weight_initializer2, biases=bias_initializer, activation_names=["perceptron_threshold"], decorator_params=[2])
+#
+# densenet = DenseNet(input_size=1, block_size=[1], output_size=1)
+# print(densenet.get_config())
+#
+# nn.to_dict("nn.txt")
+# nn1.to_dict("nn1_before.txt")
+#
+# nn1.from_dict("nn.txt")
+#
+# nn1.to_dict("nn1_after.txt")
+#
+# # print("**** KERAS OBJECTS ****")
+# #
+# # kl = keras.layers.Dense(4)
+# # print(kl.get_config())
+# # print(kl.get_weights())
+# #
+# # k = keras.Sequential()
+# # k.add(keras.layers.Dense(3, input_shape=(4,)))
+# # # Afterwards, we do automatic shape inference:
+# # k.add(layer1)
+# # print(k.get_config())
+# # print(k.get_weights())
+# #
+# # # k.save_weights("test.h5")
+# #
+# # k2 = keras.Sequential()
+# # k2.add(keras.layers.Dense(3, input_shape=(4,)))
+# # # Afterwards, we do automatic shape inference:
+# # k2.add(keras.layers.Dense(1, input_shape=(3,)))
+# # print(k2.get_config())
+# # print(k2.get_weights())
+# # k2.load_weights("test.h5")
+# # print(k2.get_weights())
+
+print(HEADER_OF_FILE)
+print(HEADER_OF_FILE.count("\n"))
+inp = np.array([[1]], dtype=float)
+nn = IModel(
+    1,
+    [1],
+    1,
+)
+nn.export_to_file("./test_export")
+
+nn_loaded = IModel(
+    1,
+    [1],
+    1,
+)
+nn_loaded.from_file("./test_export")
+nn_loaded.export_to_file("./test_export1")
+
+x = inp.copy()
+x1 = inp.copy()
+
+print(nn.network(inp).numpy())
+print(nn_loaded.network(inp).numpy())
+
+print("FIRST")
+for i, layer in enumerate(nn.network.blocks):
+    x = layer.layer(x)
+    print(layer.layer.w.numpy(), layer.layer.b.numpy())
+    print(f"Layer {i}", x)
+
+print(
+    nn.network.classifier.layer.w.numpy(),
+    nn.network.classifier.layer.b.numpy(),
+    nn.network.classifier.layer.activation_func.__name__,
+)
+x = nn.network.classifier.layer(x)
+print(f"Classifier", x)
+print()
+
+print("SECOND")
+for i, layer in enumerate(nn_loaded.network.blocks):
+    x1 = layer.layer(x1)
+    print(layer.layer.w.numpy(), layer.layer.b.numpy())
+    print(f"Layer {i}", x1)
+
+print(
+    nn_loaded.network.classifier.layer.w.numpy(),
+    nn_loaded.network.classifier.layer.b.numpy(),
+    nn_loaded.network.classifier.layer.activation_func.__name__,
+)
+x1 = nn_loaded.network.classifier.layer(x1)
+print(f"Classifier", x1)

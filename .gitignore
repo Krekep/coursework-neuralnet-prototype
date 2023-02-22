@@ -187,3 +187,9 @@ resource
 testlaunches/solution_tables
 testlaunches/archive
 *.xlsx
+*.cpp
+*.hpp
+*.o
+*.h5
+*.txt
+*.apg

@@ -40,32 +40,44 @@ class ILayer:
 
     """
 
-    def __init__(self, inp_size, shape, activation, weight, bias, layer_type="Dense", name="net", is_debug=False, **kwargs):
-        try:
-            self.layer = _create_functions[layer_type](inp_size, shape, activation, weight, bias, **kwargs)
+    def __init__(
+        self,
+        inp_size,
+        shape,
+        activation,
+        weight,
+        bias,
+        layer_type="Dense",
+        name="net",
+        is_debug=False,
+        **kwargs
+    ):
+        self.layer = _create_functions[layer_type](
+            inp_size, shape, activation, weight, bias, **kwargs
+        )
 
-            self._name = name
-            self._shape = shape
-            self._input_size = inp_size
-            self._is_debug = is_debug
-            self.set_name(name)
-        except Exception as e:
-            print(e)
-            self.layer = None
+        self._name = name
+        self._shape = shape
+        self._input_size = inp_size
+        self._is_debug = is_debug
+        self.set_name(name)
 
     @classmethod
-    def create_dense(cls,
-                     inp_size,
-                     shape,
-                     activation=keras.activations.linear,
-                     weight=keras.initializers.get('ones'),
-                     bias=keras.initializers.get('zeros'),
-                     **kwargs
-                     ):
+    def create_dense(
+        cls,
+        inp_size,
+        shape,
+        activation=keras.activations.linear,
+        weight=keras.initializers.get("ones"),
+        bias=keras.initializers.get("zeros"),
+        **kwargs
+    ):
         if kwargs.get("layer_type") is not None:
             ilayer = cls(inp_size, shape, activation, weight, bias, **kwargs)
         else:
-            ilayer = cls(inp_size, shape, activation, weight, bias, layer_type="Dense", **kwargs)
+            ilayer = cls(
+                inp_size, shape, activation, weight, bias, layer_type="Dense", **kwargs
+            )
         return ilayer
 
     def get_config(self) -> dict:
@@ -79,7 +91,11 @@ class ILayer:
 
     @classmethod
     def from_dict(cls, config):
-        res = cls.create_dense(inp_size=config["inp_size"], shape=config["shape"], layer_type=config["layer_type"])
+        res = cls.create_dense(
+            inp_size=config["inp_size"],
+            shape=config["shape"],
+            layer_type=config["layer_type"],
+        )
         res.layer.from_dict(config)
 
         return res
@@ -148,4 +164,3 @@ class ILayer:
 
 _create_functions = defaultdict(lambda: MyDense)
 _create_functions["Dense"] = MyDense
-

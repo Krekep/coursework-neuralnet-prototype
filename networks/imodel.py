@@ -1,5 +1,6 @@
+import os
 from collections import defaultdict
-from typing import List
+from typing import List, Callable
 import json
 
 import keras
@@ -8,23 +9,17 @@ import keras.initializers
 import numpy as np
 import tensorflow as tf
 
-from networks import activations
-from networks.densenet import DenseNet
-from networks.layers.dense import MyDense
+from networks import activations, cpp_utils
+from networks.config_format import LAYER_DICT_NAMES, HEADER_OF_FILE
+from networks.topology.densenet import DenseNet
 
 
-def _get_act_and_init(kwargs: dict, default_act, default_out_act, default_init):
+def _get_act_and_init(kwargs: dict, default_act, default_init):
     if kwargs.get("activation") is None:
         activation = default_act
     else:
         activation = kwargs["activation"]
         kwargs.pop("activation")
-
-    if kwargs.get("out_activation") is None:
-        out_activation = default_out_act
-    else:
-        out_activation = kwargs["out_activation"]
-        kwargs.pop("out_activation")
 
     if kwargs.get("weight") is None:
         weight = default_init
@@ -38,55 +33,72 @@ def _get_act_and_init(kwargs: dict, default_act, default_out_act, default_init):
         biases = kwargs["biases"]
         kwargs.pop("biases")
 
-    return activation, out_activation, weight, biases, kwargs
+    return activation, weight, biases, kwargs
 
 
 class IModel(object):
     """
-    Interface class for working with neural networks
+    Interface class for working with neural topology
     """
 
-    def __init__(self, input_size, block_size, output_size,
-                 activation_func=keras.activations.sigmoid,
-                 out_activation=tf.keras.activations.linear,
-                 weight_init=tf.random_normal_initializer(),
-                 bias_init=tf.random_normal_initializer(),
-                 normalization=1.0,
-                 name="net",
-                 net_type='DenseNet',
-                 is_debug=False, **kwargs):
+    def __init__(
+        self,
+        input_size: int,
+        block_size: List[int],
+        output_size: int,
+        activation_func=keras.activations.sigmoid,
+        weight_init=tf.random_normal_initializer(),
+        bias_init=tf.random_normal_initializer(),
+        normalization=1.0,
+        name="net",
+        net_type="DenseNet",
+        is_debug=False,
+        **kwargs,
+    ):
+        self.network = _create_functions[net_type](
+            input_size,
+            block_size,
+            activation_func=activation_func,
+            weight=weight_init,
+            biases=bias_init,
+            output_size=output_size,
+            is_debug=is_debug,
+            **kwargs,
+        )
 
-        try:
-            self.network = _create_functions[net_type](input_size, block_size, activation_func=activation_func,
-                                                       out_activation=out_activation,
-                                                       weight=weight_init, biases=bias_init, output_size=output_size,
-                                                       is_debug=is_debug, **kwargs)
+        # self.network = DenseNet(input_size, block_size, activation_func=activation_func,
+        #                         out_activation=out_activation,
+        #                         weight=weight_init, biases=bias_init, output_size=output_size,
+        #                         is_debug=is_debug, **kwargs)
+        self._input_size = input_size
+        self._output_size = output_size
+        self._normalization = normalization
+        self._shape = block_size
+        self._train_history = None
+        self._name = name
+        self._is_debug = is_debug
+        self.set_name(name)
 
-            # self.network = DenseNet(input_size, block_size, activation_func=activation_func,
-            #                         out_activation=out_activation,
-            #                         weight=weight_init, biases=bias_init, output_size=output_size,
-            #                         is_debug=is_debug, **kwargs)
-            self._input_size = input_size
-            self._output_size = output_size
-            self._normalization = normalization
-            self._shape = block_size
-            self._train_history = None
-            self._name = name
-            self._is_debug = is_debug
-            self.set_name(name)
-
-        except Exception as e:
-            print(e)
-            self.network = None
-
-    def compile(self, rate=1e-2, optimizer=tf.keras.optimizers.SGD,
-                loss_func=tf.keras.losses.MeanSquaredError(), metrics=None):
+    def compile(
+        self,
+        rate=1e-2,
+        optimizer=tf.keras.optimizers.SGD,
+        loss_func=tf.keras.losses.MeanSquaredError(),
+        metrics=None,
+    ):
         if metrics is None:
-            metrics = [tf.keras.metrics.MeanSquaredError(), tf.keras.metrics.MeanAbsoluteError(),
-                       tf.keras.metrics.MeanSquaredLogarithmicError()]
+            metrics = [
+                tf.keras.metrics.MeanSquaredError(),
+                tf.keras.metrics.MeanAbsoluteError(),
+                tf.keras.metrics.MeanSquaredLogarithmicError(),
+            ]
 
-        self.network.compile(optimizer=optimizer(learning_rate=rate), loss=loss_func, metrics=metrics,
-                             run_eagerly=False)
+        self.network.compile(
+            optimizer=optimizer(learning_rate=rate),
+            loss=loss_func,
+            metrics=metrics,
+            run_eagerly=False,
+        )
 
     def feedforward(self, inputs: np.ndarray) -> tf.Tensor:
         """
@@ -104,9 +116,16 @@ class IModel(object):
 
         return tf.math.scalar_mul(self._normalization, self.network(inputs))
 
-    def train(self, x_data: np.ndarray, y_data: np.ndarray, validation_split=0.0,
-              epochs=50, mini_batch_size=None, callbacks=None,
-              verbose='auto') -> keras.callbacks.History:
+    def train(
+        self,
+        x_data: np.ndarray,
+        y_data: np.ndarray,
+        validation_split=0.0,
+        epochs=50,
+        mini_batch_size=None,
+        callbacks=None,
+        verbose="auto",
+    ) -> keras.callbacks.History:
         """
         Train network on passed dataset and return training history
 
@@ -134,34 +153,175 @@ class IModel(object):
         """
         if not self._is_debug:
             callbacks = []
-        self._train_history = self.network.fit(x_data, y_data, batch_size=mini_batch_size,
-                                               callbacks=callbacks,
-                                               validation_split=validation_split, epochs=epochs, verbose=verbose)
+        self._train_history = self.network.fit(
+            x_data,
+            y_data,
+            batch_size=mini_batch_size,
+            callbacks=callbacks,
+            validation_split=validation_split,
+            epochs=epochs,
+            verbose=verbose,
+        )
         return self._train_history
 
-    # def save_weights(self, path, **kwargs):
-    #     with open(path, 'r') as f:
-    #         s = self.network.to_json(**kwargs)
-    #         f.write(s)
-    #
-    # def load_weights(self, path, **kwargs):
-    #     with open(path, "w") as f:
-    #         s = f.readline()
-    #         self.network = keras.models.model_from_json(s, **kwargs)
+    def export_to_cpp(
+        self, path: str, array_type: str = "[]", path_to_compiler: str = "g++", **kwargs
+    ):
+        res = """
+        #include <cmath>
+        #include <vector>
 
-    def to_dict(self, path, **kwargs):
-        config = self.network.to_dict(**kwargs)
-        with open(path, "w") as f:
-            f.write(json.dumps(config))
+        """
 
-    def from_dict(self, path, **kwargs):
-        with open(path, "r") as f:
+        config = self.to_dict(**kwargs)
+
+        input_size = self._input_size
+        output_size = self._output_size
+        blocks = self._shape
+        layers = config["layer"]
+
+        comment = f"// This function takes {input_size} elements array and returns {output_size} elements array\n"
+        signature = f""
+        start_func = "{\n"
+        end_func = "}\n"
+        transform_input_vector = ""
+        transform_output_array = ""
+        return_stat = "return answer;\n"
+
+        creator_1d: Callable[[str, int], str] = cpp_utils.array1d_creator("float")
+        creator_heap_1d: Callable[[str, int], str] = cpp_utils.array1d_heap_creator(
+            "float"
+        )
+        creator_2d: Callable[[str, int, int], str] = cpp_utils.array2d_creator("float")
+        if array_type == "[]":
+            signature = f"float* feedforward(float x_array[])\n"
+
+        if array_type == "vector":
+            signature = f"vector<float> feedforward(vector<float> x)\n"
+
+            transform_input_vector = cpp_utils.transform_1dvector_to_array(
+                "float", input_size, "x", "x_array"
+            )
+            transform_output_array = cpp_utils.transform_1darray_to_vector(
+                "float", output_size, "", "answer_vector"
+            )
+            return_stat = "return answer_vector;\n"
+
+        create_layers = ""
+        create_layers += creator_1d(f"layer_0", input_size, initial_value=0)
+        for i, size in enumerate(blocks):
+            create_layers += creator_1d(f"layer_{i + 1}", size, initial_value=0)
+        create_layers += creator_1d(
+            f"layer_{len(blocks) + 1}", output_size, initial_value=0
+        )
+        create_layers += cpp_utils.copy_1darray_to_array(
+            input_size, "x_array", "layer_0"
+        )
+
+        create_weights = ""
+        for i, layer_dict in enumerate(layers):
+            create_weights += creator_2d(
+                f"weight_{i}_{i + 1}",
+                layer_dict[LAYER_DICT_NAMES["inp_size"]],
+                layer_dict[LAYER_DICT_NAMES["shape"]],
+            )
+
+        fill_weights = ""
+        for i, layer_dict in enumerate(layers):
+            fill_weights += cpp_utils.fill_2d_array_by_list(
+                f"weight_{i}_{i + 1}", layer_dict[LAYER_DICT_NAMES["weights"]]
+            )
+
+        create_biases = ""
+        for i, layer_dict in enumerate(layers):
+            create_biases += creator_1d(
+                f"bias_{i + 1}", layer_dict[LAYER_DICT_NAMES["shape"]]
+            )
+
+        fill_biases = ""
+        for i, layer_dict in enumerate(layers):
+            fill_biases += cpp_utils.fill_1d_array_by_list(
+                f"bias_{i + 1}", layer_dict[LAYER_DICT_NAMES["bias"]]
+            )
+            # fill_biases += cpp_utils.fill_1d_array_by_list_short("float",
+            #                                                      layer_dict[LAYER_DICT_NAMES["shape"]],
+            #                                                      f"bias_{i + 1}",
+            #                                                      f"temp_{i + 1}",
+            #                                                      layer_dict[LAYER_DICT_NAMES["bias"]])
+
+        feed_forward_cycles = ""
+        for i, layer_dict in enumerate(layers):
+            left_size = layer_dict[
+                LAYER_DICT_NAMES["inp_size"]
+            ]  # if i != 0 else input_size
+            right_size = layer_dict[LAYER_DICT_NAMES["shape"]]
+            act_func = layer_dict[LAYER_DICT_NAMES["activation"]]
+            decorator_params = layer_dict.get(LAYER_DICT_NAMES["decorator_params"])
+            feed_forward_cycles += cpp_utils.feed_forward_step(
+                f"layer_{i}",
+                left_size,
+                f"layer_{i + 1}",
+                right_size,
+                f"weight_{i}_{i + 1}",
+                f"bias_{i + 1}",
+                act_func,
+                decorator_params,
+            )
+
+        move_result = creator_heap_1d("answer", output_size)
+        move_result += cpp_utils.copy_1darray_to_array(
+            output_size, f"layer_{len(blocks) + 1}", "answer"
+        )
+
+        res += comment
+        res += signature
+        res += start_func
+        res += transform_input_vector
+        res += create_layers
+        res += create_weights
+        res += fill_weights
+        res += create_biases
+        res += fill_biases
+        res += feed_forward_cycles
+        res += move_result
+        res += transform_output_array
+        res += return_stat
+        res += end_func
+
+        header_res = f"""
+#ifndef {path[0].upper() + path[1:]}_hpp
+#define {path[0].upper() + path[1:]}_hpp
+
+{comment}
+{signature}
+
+#endif /* {path[0].upper() + path[1:]}_hpp */
+
+        """
+
+        with open(path + ".cpp", "w") as f:
+            f.write(res)
+
+        with open(path + ".hpp", "w") as f:
+            f.write(header_res)
+
+        os.system(path_to_compiler + " -c -Ofast " + path + ".cpp")
+
+    def to_dict(self, **kwargs):
+        return self.network.to_dict(**kwargs)
+
+    def export_to_file(self, path, **kwargs):
+        config = self.to_dict(**kwargs)
+        with open(path + ".apg", "w") as f:
+            f.write(HEADER_OF_FILE + json.dumps(config))
+
+    def from_file(self, path, **kwargs):
+        with open(path + ".apg", "r") as f:
+            for header in range(HEADER_OF_FILE.count("\n")):
+                _ = f.readline()
             config = json.loads(f.readline())
             self.network.from_dict(config)
             self.set_name(config["name"])
-
-    def save_model(self, path, **kwargs):
-        self.network.save(path, **kwargs)
 
     def set_name(self, name: str) -> None:
         """
@@ -233,28 +393,23 @@ class IModel(object):
         return str(self.network)
 
     @classmethod
-    def load_model(cls, path, **kwargs):
-        res = cls(1, [1], 1)
-        res.network = keras.models.load_model(path, custom_objects={'Dense': MyDense()}, **kwargs)
-
-        return res
-
-    @classmethod
     def create_neuron(cls, input_size, output_size, shape, **kwargs):
-        activation, out_activation, weight, biases, kwargs = _get_act_and_init(kwargs,
-                                                                               keras.activations.sigmoid,
-                                                                               keras.activations.linear,
-                                                                               tf.random_normal_initializer())
+        activation, weight, biases, kwargs = _get_act_and_init(
+            kwargs,
+            keras.activations.sigmoid,
+            tf.random_normal_initializer(),
+        )
 
         try:
-            res = cls(input_size=input_size,
-                      block_size=shape,
-                      output_size=output_size,
-                      activation_func=activation,
-                      out_activation=out_activation,
-                      bias_init=biases,
-                      weight_init=weight,
-                      **kwargs)
+            res = cls(
+                input_size=input_size,
+                block_size=shape,
+                output_size=output_size,
+                activation_func=activation,
+                bias_init=biases,
+                weight_init=weight,
+                **kwargs,
+            )
         except Exception as e:
             print(e)
             res = None
@@ -263,21 +418,22 @@ class IModel(object):
 
     @classmethod
     def create_perceptron(cls, input_size, output_size, shape, threshold=1, **kwargs):
-
-        activation, out_act, weight, biases, kwargs = _get_act_and_init(kwargs,
-                                                                        activations.perceptron_threshold(threshold),
-                                                                        activations.perceptron_threshold(threshold),
-                                                                        tf.random_normal_initializer())
+        activation, weight, biases, kwargs = _get_act_and_init(
+            kwargs,
+            activations.perceptron_threshold(threshold),
+            tf.random_normal_initializer(),
+        )
 
         try:
-            res = cls(input_size=input_size,
-                      block_size=shape,
-                      output_size=output_size,
-                      activation_func=activation,
-                      out_activation=out_act,
-                      bias_init=biases,
-                      weight_init=weight,
-                      **kwargs)
+            res = cls(
+                input_size=input_size,
+                block_size=shape,
+                output_size=output_size,
+                activation_func=activation,
+                bias_init=biases,
+                weight_init=weight,
+                **kwargs,
+            )
         except Exception as e:
             print(e)
             res = None

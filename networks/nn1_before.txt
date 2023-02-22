@@ -1,1 +1,0 @@
-{"name": "net", "input_size": 1, "block_size": [1], "output_size": 1, "layer": [{"shape": 1, "inp_size": 1, "weights": [[0.0]], "biases": [0.0], "layer_type": "MyDense", "dtype": "float32", "activation": "perceptron_threshold", "decorator_params": 2}]}

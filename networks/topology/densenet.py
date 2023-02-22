@@ -7,18 +7,17 @@ from networks.ilayer import ILayer
 
 
 class DenseNet(tf.keras.Model):
-
-    def __init__(self,
-                 input_size: int = 2,
-                 block_size: list = None,
-                 output_size: int = 10,
-                 activation_func=tf.keras.activations.linear,
-                 out_activation=tf.keras.activations.linear,
-                 weight=keras.initializers.get('ones'),
-                 biases=keras.initializers.get('zeros'),
-                 is_debug: bool = False,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        input_size: int = 2,
+        block_size: list = None,
+        output_size: int = 10,
+        activation_func=tf.keras.activations.linear,
+        weight=keras.initializers.get("ones"),
+        biases=keras.initializers.get("zeros"),
+        is_debug: bool = False,
+        **kwargs,
+    ):
         activation_names = None
         decorator_params = None
         if "activation_names" in kwargs.keys():
@@ -31,6 +30,9 @@ class DenseNet(tf.keras.Model):
             decorator_params = kwargs.get("decorator_params")
             kwargs.pop("decorator_params")
         else:
+            decorator_params = None
+
+        if decorator_params is None:
             decorator_params = [None] * (len(block_size) + 1)
 
         super(DenseNet, self).__init__(**kwargs)
@@ -40,28 +42,46 @@ class DenseNet(tf.keras.Model):
             activation_func = [activation_func] * (len(block_size) + 1)
 
         self.blocks.append(
-            ILayer.create_dense(input_size, block_size[0], activation=activation_func[0], weight=weight, bias=biases,
-                                is_debug=is_debug,
-                                name=f"MyDense0",
-                                activation_names=activation_names[0],
-                                decorator_params=decorator_params[0]))
+            ILayer.create_dense(
+                input_size,
+                block_size[0],
+                activation=activation_func[0],
+                weight=weight,
+                bias=biases,
+                is_debug=is_debug,
+                name=f"MyDense0",
+                activation_names=activation_names[0],
+                decorator_params=decorator_params[0],
+            )
+        )
         for i in range(1, len(block_size)):
             self.blocks.append(
-                ILayer.create_dense(block_size[i - 1], block_size[i], activation=activation_func[i], weight=weight,
-                                    bias=biases, is_debug=is_debug,
-                                    name=f"MyDense{i}",
-                                    activation_names=activation_names[i],
-                                    decorator_params=decorator_params[i]))
+                ILayer.create_dense(
+                    block_size[i - 1],
+                    block_size[i],
+                    activation=activation_func[i],
+                    weight=weight,
+                    bias=biases,
+                    is_debug=is_debug,
+                    name=f"MyDense{i}",
+                    activation_names=activation_names[i],
+                    decorator_params=decorator_params[i],
+                )
+            )
 
-        self.classifier = ILayer.create_dense(block_size[-1], output_size, activation=activation_func[-1],
-                                              weight=weight,
-                                              bias=biases, is_debug=is_debug,
-                                              name=f"OutputLayerMyDense",
-                                              activation_names=activation_names[-1],
-                                              decorator_params=decorator_params[-1])
+        self.classifier = ILayer.create_dense(
+            block_size[-1],
+            output_size,
+            activation=activation_func[-1],
+            weight=weight,
+            bias=biases,
+            is_debug=is_debug,
+            name=f"OutputLayerMyDense",
+            activation_names=activation_names[-1],
+            decorator_params=decorator_params[-1],
+        )
 
         self.activation_func = activation_func
-        self.out_activation = out_activation
         self.weight_initializer = weight
         self.bias_initializer = biases
         self.input_size = input_size
@@ -117,14 +137,15 @@ class DenseNet(tf.keras.Model):
 
     def to_dict(self, **kwargs):
         res = {
-            # "net_type": "MyDense",
+            "net_type": "MyDense",
             "name": self._name,
             "input_size": self.input_size,
             "block_size": self.block_size,
             "output_size": self.output_size,
             # "activation_func": activations.serialize(self.activation_func),       # Layers have own activation param
             # "out_activation": activations.serialize(self.out_activation),         # Layers have own activation param
-            "layer": []
+            "layer": [],
+            "classifier": self.classifier.to_dict(),
         }
 
         for i, layer in enumerate(self.blocks):
@@ -133,8 +154,20 @@ class DenseNet(tf.keras.Model):
         return res
 
     @classmethod
-    def from_layers(cls, input_size: int, block_size: List[int], output_size: int, layers: List[ILayer], **kwargs):
-        res = cls(input_size=input_size, block_size=block_size, output_size=output_size, **kwargs)
+    def from_layers(
+        cls,
+        input_size: int,
+        block_size: List[int],
+        output_size: int,
+        layers: List[ILayer],
+        **kwargs,
+    ):
+        res = cls(
+            input_size=input_size,
+            block_size=block_size,
+            output_size=output_size,
+            **kwargs,
+        )
 
         for layer_num in range(len(res.blocks)):
             res.blocks[layer_num] = layers[layer_num]
@@ -153,8 +186,12 @@ class DenseNet(tf.keras.Model):
         for layer_num in range(len(self.blocks)):
             self.blocks[layer_num] = layers[layer_num]
 
+        self.classifier = ILayer.from_dict(config["classifier"])
+
     def get_config(self):
-        config = super(DenseNet, self).get_config()  # get config of the base Layer class
+        config = super(
+            DenseNet, self
+        ).get_config()  # get config of the base Layer class
 
         # config.update({'units': self.units,
         #                'activation_func': tf.keras.activations.serialize(self.activation_func),
