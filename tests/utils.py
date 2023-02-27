@@ -5,20 +5,21 @@ import networks.activations
 
 
 def array_compare(a, b):
+    fl = True
     if len(a) != len(b):
         return False
     for i in range(len(a)):
         if isinstance(a[i], (list, np.ndarray)):
             if isinstance(b[i], (list, np.ndarray)):
-                return array_compare(a[i], b[i])
+                fl = fl & array_compare(a[i], b[i])
             else:
-                return False
+                fl = fl & False
         else:
             if isinstance(b[i], (list, np.ndarray)):
-                return False
+                fl = fl & False
             elif a[i] != b[i]:
-                return False
-    return True
+                fl = fl & False
+    return fl
 
 
 def init_params(act_name: str = None, weight_name: str = None, bias_name: str = None):

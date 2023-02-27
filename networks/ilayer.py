@@ -24,12 +24,12 @@ def _check_dimension(x) -> tuple:
         return False, None
     if isinstance(x, np.ndarray):
         if x.ndim == 1:
-            return True, x.reshape((x.shape[0], 1))
+            return True, x.reshape((1, x.shape[0]))
         return x.ndim >= 2, x
     if isinstance(x, Tensor):
         x = x.numpy()
         if x.ndim == 1:
-            return True, x.reshape((x.shape[0], 1))
+            return True, x.reshape((1, x.shape[0]))
         return x.ndim >= 2, x
     return False, None
 

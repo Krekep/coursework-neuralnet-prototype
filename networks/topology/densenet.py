@@ -40,34 +40,36 @@ class DenseNet(tf.keras.Model):
 
         if not isinstance(activation_func, list):
             activation_func = [activation_func] * (len(block_size) + 1)
-
-        self.blocks.append(
-            ILayer.create_dense(
-                input_size,
-                block_size[0],
-                activation=activation_func[0],
-                weight=weight,
-                bias=biases,
-                is_debug=is_debug,
-                name=f"MyDense0",
-                activation_names=activation_names[0],
-                decorator_params=decorator_params[0],
-            )
-        )
-        for i in range(1, len(block_size)):
+        if len(block_size) != 0:
             self.blocks.append(
                 ILayer.create_dense(
-                    block_size[i - 1],
-                    block_size[i],
-                    activation=activation_func[i],
+                    input_size,
+                    block_size[0],
+                    activation=activation_func[0],
                     weight=weight,
                     bias=biases,
                     is_debug=is_debug,
-                    name=f"MyDense{i}",
-                    activation_names=activation_names[i],
-                    decorator_params=decorator_params[i],
+                    name=f"MyDense0",
+                    activation_names=activation_names[0],
+                    decorator_params=decorator_params[0],
                 )
             )
+            for i in range(1, len(block_size)):
+                self.blocks.append(
+                    ILayer.create_dense(
+                        block_size[i - 1],
+                        block_size[i],
+                        activation=activation_func[i],
+                        weight=weight,
+                        bias=biases,
+                        is_debug=is_debug,
+                        name=f"MyDense{i}",
+                        activation_names=activation_names[i],
+                        decorator_params=decorator_params[i],
+                    )
+                )
+        else:
+            block_size = [input_size]
 
         self.classifier = ILayer.create_dense(
             block_size[-1],

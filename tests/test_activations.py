@@ -19,3 +19,8 @@ from tests.utils import array_compare, init_params
 def test_create_layer(threshold, inp, expected):
     act_func = perceptron_threshold(threshold)
     assert array_compare(act_func(inp), expected)
+
+
+
+def test_my():
+    assert True

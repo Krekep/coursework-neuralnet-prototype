@@ -49,7 +49,6 @@ class IModel(object):
         activation_func=keras.activations.sigmoid,
         weight_init=tf.random_normal_initializer(),
         bias_init=tf.random_normal_initializer(),
-        normalization=1.0,
         name="net",
         net_type="DenseNet",
         is_debug=False,
@@ -72,7 +71,6 @@ class IModel(object):
         #                         is_debug=is_debug, **kwargs)
         self._input_size = input_size
         self._output_size = output_size
-        self._normalization = normalization
         self._shape = block_size
         self._train_history = None
         self._name = name
@@ -114,7 +112,7 @@ class IModel(object):
             Network answer
         """
 
-        return tf.math.scalar_mul(self._normalization, self.network(inputs))
+        return self.network(inputs)
 
     def train(
         self,
