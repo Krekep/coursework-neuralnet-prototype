@@ -62,6 +62,7 @@ def _create_random_network(
     all_act_names = list(activations.get_all_activations().keys())
     for _ in shape:
         act_names.append(random.choice(all_act_names))
+        act.append(activations.get(act_names[-1]))
         # TODO: activation func can take additional arguments
         # but at this moment I dont create random arguments (insted of *None* in decorator_params)
         decorator_param.append(None)
@@ -140,6 +141,11 @@ def train(
             get_metric("MeanAbsoluteError"),
             get_metric("CosineSimilarity"),
         ],
+        "validation_metrics": [
+            get_metric("MeanSquaredError"),
+            get_metric("MeanAbsoluteError"),
+            get_metric("CosineSimilarity"),
+        ],
         "use_rand_net": True,
         "experiments": False,
         "net_type": "DenseNet",
@@ -153,7 +159,6 @@ def train(
             ]
             for shape in _default_shapes
         ],
-        "activation_func": activations.get("linear"),
     }
     for kw in kwargs:
         args[kw] = kwargs[kw]
@@ -225,7 +230,7 @@ def train(
         if args["debug"]:
             print(nn)
             verb = 1
-        history[i].append(
+        history.append(
             nn.train(
                 x_data,
                 y_data,
@@ -333,7 +338,7 @@ def full_search(
                             metaparams[-1]["optimizer"] = optimizer
                             metaparams[-1]["validation_split"] = validation_split
                             metaparams[-1]["epochs"] = epochs
-                            metaparams[-1]["rate"] = rate
+                            metaparams[-1]["eps"] = rate
                             metaparams[-1]["metrics"] = metrics
                             metaparams[-1]["validation_metrics"] = validation_metrics
                             metaparams[-1]["nets_param"] = nets_param

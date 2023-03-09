@@ -172,6 +172,6 @@ def f_x_z(x, z):
     return 2 * x - z
 
 
-x_data = np.array([i / 10 for i in range(0, 101)])
-f_x_data = np.array([f_x(x) for x in x_data])
+x_data = np.array([[i / 10] for i in range(0, 101)])
+f_x_data = np.array([[f_x(x)] for x in x_data])
 trainer.full_search(x_data, f_x_data)
