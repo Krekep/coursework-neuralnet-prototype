@@ -1,18 +1,10 @@
+from typing import Tuple
+
 import numpy as np
+from scipy import stats
 
-from networks.config_format import HEADER_OF_FILE
-from networks.imodel import IModel
+from equations.system_ode import SystemODE
 
-import tensorflow as tf
-from tensorflow import keras
-
-from networks import activations
-from networks.topology.densenet import DenseNet
-from networks.ilayer import ILayer
-from networks.config_format import HEADER_OF_FILE
-from networks.imodel import IModel
-from networks.layers.dense import MyDense
-from tests.utils import init_params
 
 # act_func, weight_initializer1, bias_initializer = init_params(act_name='linear', weight_name='ones',
 #                                                               bias_name='zeros')
@@ -63,55 +55,123 @@ from tests.utils import init_params
 # # k2.load_weights("test.h5")
 # # print(k2.get_weights())
 
-print(HEADER_OF_FILE)
-print(HEADER_OF_FILE.count("\n"))
-inp = np.array([[1]], dtype=float)
-nn = IModel(
-    1,
-    [1],
-    1,
-)
-nn.export_to_file("./test_export")
+# print(HEADER_OF_FILE)
+# print(HEADER_OF_FILE.count("\n"))
+# inp = np.array([[1]], dtype=float)
+# nn = IModel(
+#     1,
+#     [1],
+#     1,
+# )
+# nn.export_to_file("./test_export")
+#
+# nn_loaded = IModel(
+#     1,
+#     [1],
+#     1,
+# )
+# nn_loaded.from_file("./test_export")
+# nn_loaded.export_to_file("./test_export1")
+#
+# x = inp.copy()
+# x1 = inp.copy()
+#
+# print(nn.network(inp).numpy())
+# print(nn_loaded.network(inp).numpy())
+#
+# print("FIRST")
+# for i, layer in enumerate(nn.network.blocks):
+#     x = layer.layer(x)
+#     print(layer.layer.w.numpy(), layer.layer.b.numpy())
+#     print(f"Layer {i}", x)
+#
+# print(
+#     nn.network.classifier.layer.w.numpy(),
+#     nn.network.classifier.layer.b.numpy(),
+#     nn.network.classifier.layer.activation_func.__name__,
+# )
+# x = nn.network.classifier.layer(x)
+# print(f"Classifier", x)
+# print()
+#
+# print("SECOND")
+# for i, layer in enumerate(nn_loaded.network.blocks):
+#     x1 = layer.layer(x1)
+#     print(layer.layer.w.numpy(), layer.layer.b.numpy())
+#     print(f"Layer {i}", x1)
+#
+# print(
+#     nn_loaded.network.classifier.layer.w.numpy(),
+#     nn_loaded.network.classifier.layer.b.numpy(),
+#     nn_loaded.network.classifier.layer.activation_func.__name__,
+# )
+# x1 = nn_loaded.network.classifier.layer(x1)
+# print(f"Classifier", x1)
+#
+# def S_ODE_2_table(points_array: list, interval: Tuple[float, float] = (0, np.pi)):
+#     """
+#     y0' = y1 * y2 y0(0)=0
+#     y1' = -y0 * y2 y1(0)=0
+#     y2' = -0.5 * y0 * y1 y2(0) = 0
+#     """
+#     size = 3
+#     sode = "y1*y2 y0(0)=0\n" \
+#            "-y0*y2 y1(0)=1\n" \
+#            "-0.5*y0*y1 y2(0)=1"
+#     temp = sode.split("\n")
+#     prepared_sode = []
+#     for eq in temp:
+#         prepared_sode.append(eq.split(" "))
+#
+#     solver = SystemODE(debug=True)
+#     solver.prepare_equations(size, prepared_sode)
+#     solver.solve(interval, points_array)
+#     res_table = solver.build_table()
+#     return res_table
+#
+#
+# def prepare_interval(interval: Tuple[float, float], step: float, distr="uniform"):
+#     a = interval[0]
+#     b = interval[1]
+#
+#     points_count = int((b - a) / step)
+#     scale = b - a
+#     if distr == "uniform":
+#         d = stats.uniform.rvs(loc=a, scale=b - a, size=points_count)
+#
+#     temp = np.unique(d[(a <= d) & (d <= b)]).tolist()
+#     res = sorted(temp)
+#
+#     return res
+#
+#
+# # interval_for_table_func = [(0, np.pi), (0.1, 1), (0, 40)]
+# # step = 0.05
+# # x = prepare_interval(interval_for_table_func[0], step)
+# # table = S_ODE_2_table(x)
+#
+# s = """y0*2 y0(0)=1"""
+# s = s.split("\n")
+# parsed_s = []
+# for eq in s:
+#     parsed_s.append(eq.split())
+#
+# e = SystemODE(debug=True)
+# e.prepare_equations(1, parsed_s)
+# e.solve((0, 1))
+# res = e.build_table([0])
 
-nn_loaded = IModel(
-    1,
-    [1],
-    1,
-)
-nn_loaded.from_file("./test_export")
-nn_loaded.export_to_file("./test_export1")
+import trainer
 
-x = inp.copy()
-x1 = inp.copy()
 
-print(nn.network(inp).numpy())
-print(nn_loaded.network(inp).numpy())
+def f_x(x):
+    return 2 * x
 
-print("FIRST")
-for i, layer in enumerate(nn.network.blocks):
-    x = layer.layer(x)
-    print(layer.layer.w.numpy(), layer.layer.b.numpy())
-    print(f"Layer {i}", x)
 
-print(
-    nn.network.classifier.layer.w.numpy(),
-    nn.network.classifier.layer.b.numpy(),
-    nn.network.classifier.layer.activation_func.__name__,
-)
-x = nn.network.classifier.layer(x)
-print(f"Classifier", x)
-print()
+def f_x_z(x, z):
+    return 2 * x - z
 
-print("SECOND")
-for i, layer in enumerate(nn_loaded.network.blocks):
-    x1 = layer.layer(x1)
-    print(layer.layer.w.numpy(), layer.layer.b.numpy())
-    print(f"Layer {i}", x1)
 
-print(
-    nn_loaded.network.classifier.layer.w.numpy(),
-    nn_loaded.network.classifier.layer.b.numpy(),
-    nn_loaded.network.classifier.layer.activation_func.__name__,
-)
-x1 = nn_loaded.network.classifier.layer(x1)
-print(f"Classifier", x1)
+x_data = np.array([i / 10 for i in range(0, 101)])
+f_x_data = np.array([f_x(x) for x in x_data])
+trainer.full_search(x_data, f_x_data)

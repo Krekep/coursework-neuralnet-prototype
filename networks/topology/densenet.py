@@ -93,8 +93,8 @@ class DenseNet(tf.keras.Model):
     def call(self, inputs, **kwargs):
         x = inputs
         for layer in self.blocks:
-            x = layer(x)
-        return self.classifier(x)
+            x = layer(x, **kwargs)
+        return self.classifier(x, **kwargs)
 
     def train_step(self, data):
         """

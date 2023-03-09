@@ -56,7 +56,7 @@ class MyDense(keras.layers.Layer):
     def call(self, inputs, **kwargs):
         f = tf.matmul(inputs, self.w)
         s = f + self.b
-        return self.activation_func(s)
+        return self.activation_func(s, **kwargs)
 
     def __str__(self):
         res = f"Layer {self.name}\n"

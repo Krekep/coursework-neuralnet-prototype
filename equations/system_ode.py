@@ -10,16 +10,13 @@ from scipy.integrate import solve_ivp
 
 from matplotlib import pyplot as plt
 
-from networks.equations import utils
+from equations import utils
 from networks.utils import export_csv_table
 
-__all__ = [
-    "SystemODE"
-]
+__all__ = ["SystemODE"]
 
 
 class SystemODE(object):
-
     def __init__(self, debug=False):
         self._sol = None
         self._func = []
@@ -28,12 +25,13 @@ class SystemODE(object):
         self._size = 0
         self._debug = debug
 
-    def _f(self, y):
+    def _f(self, t, y):
         """
         Additional function for scipy.solve_ivp
 
         Parameters
         ----------
+        t
         y: list
 
         Returns
@@ -63,7 +61,7 @@ class SystemODE(object):
         self._func_arguments = self._func_arguments[:-2]
 
         for i, cond in enumerate(equations):
-            string_func = f'def dy{i}_dt({self._func_arguments}): return {cond[0]}'
+            string_func = f"def dy{i}_dt({self._func_arguments}): return {cond[0]}"
             if self._debug:
                 print("Builded function:", string_func)
             code = compile(string_func, "<string>", "exec")
@@ -71,7 +69,9 @@ class SystemODE(object):
             self._func.append(FunctionType(code.co_consts[0], globals(), "temp"))
             self._initial_values.append(utils.extract_iv(cond[1])[1])
 
-    def solve(self, interval: Tuple[float, float], points: Union[int, list]) -> None:
+    def solve(
+        self, interval: Tuple[float, float], points: Union[int, list] = None
+    ) -> None:
         """
         Solve given equations
 
@@ -83,11 +83,16 @@ class SystemODE(object):
             Amount of points per interval (or list of points)
         """
         t_span = np.array([interval[0], interval[1]])
-        if isinstance(points, list):
-            times = points
+        if points is not None:
+            if isinstance(points, list):
+                times = points
+            else:
+                times = np.linspace(t_span[0], t_span[1], points)
+            self._sol = solve_ivp(
+                self._f, t_span, self._initial_values, t_eval=times, method="LSODA"
+            )
         else:
-            times = np.linspace(t_span[0], t_span[1], points)
-        self._sol = solve_ivp(self._f, t_span, self._initial_values, t_eval=times, method="LSODA")
+            self._sol = solve_ivp(self._f, t_span, self._initial_values, method="LSODA")
         if self._debug:
             print("Success solve")
 
@@ -101,7 +106,7 @@ class SystemODE(object):
             export_csv_table(np.concatenate((t_for_export, y.T), axis=1), result_path)
 
             for i, y_i in enumerate(y):
-                plt.plot(t, y_i, '-', label=f'{i}')
+                plt.plot(t, y_i, "-", label=f"{i}")
             plt.legend()
             plt.show()
 

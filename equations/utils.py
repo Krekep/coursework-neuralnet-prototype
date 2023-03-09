@@ -2,12 +2,20 @@
 Provide some helpful functions for DE
 """
 
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 from matplotlib import pyplot as plt
 
 from networks import imodel
+
+
+def system_ode_from_string(system: str) -> List[List[str]]:
+    s = system.split("\n")
+    parsed_s = []
+    for eq in s:
+        parsed_s.append(eq.split())
+    return parsed_s
 
 
 def extract_iv(eq: str) -> Tuple[float, float]:
@@ -24,12 +32,14 @@ def extract_iv(eq: str) -> Tuple[float, float]:
     iv: tuple[float, float]
         Pair of point and value at point
     """
-    left_v = float(eq[eq.index("(") + 1:eq.index(")")])
-    right_v = float(eq[eq.index("=") + 1:])
+    left_v = float(eq[eq.index("(") + 1 : eq.index(")")])
+    right_v = float(eq[eq.index("=") + 1 :])
     return left_v, right_v
 
 
-def build_plot(network: imodel.IModel, interval: Tuple[float, float], step: float, is_debug=False) -> None:
+def build_plot(
+    network: imodel.IModel, interval: Tuple[float, float], step: float, is_debug=False
+) -> None:
     """
     Builds a two-dimensional graph on an interval with a given step.
 
@@ -69,6 +79,6 @@ def build_plot(network: imodel.IModel, interval: Tuple[float, float], step: floa
     if is_debug:
         print("End build y data from network")
     for i, y_i in enumerate(y):
-        plt.plot(x, y_i, '-', label=f'{i}')
+        plt.plot(x, y_i, "-", label=f"{i}")
     plt.legend()
     plt.show()

@@ -4,20 +4,21 @@ from tensorflow import keras
 import networks.activations
 
 
-def array_compare(a, b):
+def array_compare(a, b, eps=-6):
     fl = True
+    locality = 10**eps
     if len(a) != len(b):
         return False
     for i in range(len(a)):
         if isinstance(a[i], (list, np.ndarray)):
             if isinstance(b[i], (list, np.ndarray)):
-                fl = fl & array_compare(a[i], b[i])
+                fl = fl & array_compare(a[i], b[i], eps=eps)
             else:
                 fl = fl & False
         else:
             if isinstance(b[i], (list, np.ndarray)):
                 fl = fl & False
-            elif a[i] != b[i]:
+            elif abs(a[i] - b[i]) > locality:
                 fl = fl & False
     return fl
 

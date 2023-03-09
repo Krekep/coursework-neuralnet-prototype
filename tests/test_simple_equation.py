@@ -1,25 +1,20 @@
 import pytest
 import numpy as np
-import tests.utils
 from networks.imodel import IModel
-from tests.utils import array_compare, init_params, file_compare
-from networks.equations import simple_equation
+from tests.utils import array_compare, init_params
+from equations import simple_equation
 
 
 @pytest.mark.parametrize(
     "inp, expected",
     [
         (
-                {
-                    "x": "0, 10, 1",
-                    "y": "-10, 0, 1",
-                    "z": "0, 5, 1",
-                },
-                [
-                    ('x', (0.0, 10.0, 1.0)),
-                    ('y', (-10.0, 0.0, 1.0)),
-                    ('z', (0.0, 5.0, 1.0))
-                ]
+            {
+                "x": "0, 10, 1",
+                "y": "-10, 0, 1",
+                "z": "0, 5, 1",
+            },
+            [("x", (0.0, 10.0, 1.0)), ("y", (-10.0, 0.0, 1.0)), ("z", (0.0, 5.0, 1.0))],
         )
     ],
 )
@@ -33,40 +28,38 @@ def test_str_vars_to_float_vars(inp, expected):
     "eq, eq_vars, expected",
     [
         (
-                "3*x",
-                {
-                    "x": "0, 4, 1"
-                },
-                np.array(
-                    [
-                        [0, 0],
-                        [1, 3],
-                        [2, 6],
-                        [3, 9],
-                        [4, 12],
-                    ],
-                    dtype=float
-                )
+            "3*x",
+            {"x": "0, 4, 1"},
+            np.array(
+                [
+                    [0, 0],
+                    [1, 3],
+                    [2, 6],
+                    [3, 9],
+                    [4, 12],
+                ],
+                dtype=float,
+            ),
         ),
         (
-                "3*x+2*y+4*z",
-                {
-                    "x": "0, 2, 1",
-                    "y": "0, 2, 2",
-                    "z": "0, 0, 1",
-                },
-                np.array(
-                    [
-                        [0, 0, 0, 0],
-                        [1, 0, 0, 3],
-                        [2, 0, 0, 6],
-                        [0, 2, 0, 4],
-                        [1, 2, 0, 7],
-                        [2, 2, 0, 10],
-                    ],
-                    dtype=float
-                )
-        )
+            "3*x+2*y+4*z",
+            {
+                "x": "0, 2, 1",
+                "y": "0, 2, 2",
+                "z": "0, 0, 1",
+            },
+            np.array(
+                [
+                    [0, 0, 0, 0],
+                    [1, 0, 0, 3],
+                    [2, 0, 0, 6],
+                    [0, 2, 0, 4],
+                    [1, 2, 0, 7],
+                    [2, 2, 0, 10],
+                ],
+                dtype=float,
+            ),
+        ),
     ],
 )
 def test_str_vars_to_float_vars(eq, eq_vars, expected):
@@ -80,46 +73,44 @@ def test_str_vars_to_float_vars(eq, eq_vars, expected):
     "eq_vars, shape, act_init, w_init, b_init, expected",
     [
         (
-                {
-                    "x": "0, 4, 1"
-                },
-                [1, [], 1],
-                "linear",
-                "ones",
-                "ones",
-                np.array(
-                    [
-                        [0, 1],
-                        [1, 2],
-                        [2, 3],
-                        [3, 4],
-                        [4, 5],
-                    ],
-                    dtype=float
-                ),
+            {"x": "0, 4, 1"},
+            [1, [], 1],
+            "linear",
+            "ones",
+            "ones",
+            np.array(
+                [
+                    [0, 1],
+                    [1, 2],
+                    [2, 3],
+                    [3, 4],
+                    [4, 5],
+                ],
+                dtype=float,
+            ),
         ),
         (
-                {
-                    "x": "0, 2, 1",
-                    "y": "0, 2, 2",
-                    "z": "0, 0, 1",
-                },
-                [3, [], 1],
-                "linear",
-                "ones",
-                "ones",
-                np.array(
-                    [
-                        [0, 0, 0, 1],
-                        [1, 0, 0, 2],
-                        [2, 0, 0, 3],
-                        [0, 2, 0, 3],
-                        [1, 2, 0, 4],
-                        [2, 2, 0, 5],
-                    ],
-                    dtype=float
-                )
-        )
+            {
+                "x": "0, 2, 1",
+                "y": "0, 2, 2",
+                "z": "0, 0, 1",
+            },
+            [3, [], 1],
+            "linear",
+            "ones",
+            "ones",
+            np.array(
+                [
+                    [0, 0, 0, 1],
+                    [1, 0, 0, 2],
+                    [2, 0, 0, 3],
+                    [0, 2, 0, 3],
+                    [1, 2, 0, 4],
+                    [2, 2, 0, 5],
+                ],
+                dtype=float,
+            ),
+        ),
     ],
 )
 def test_build_network_answer(eq_vars, shape, act_init, w_init, b_init, expected):

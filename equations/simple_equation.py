@@ -6,7 +6,9 @@ from matplotlib import pyplot as plt
 from networks import imodel, utils
 
 
-def _build_table(network: imodel.IModel, axes: List[Tuple[str, Tuple[float, float, float]]], acc=None) -> List:
+def _build_table(
+    network: imodel.IModel, axes: List[Tuple[str, Tuple[float, float, float]]], acc=None
+) -> List:
     """
     Supporting method for taken network answer.
 
@@ -25,28 +27,32 @@ def _build_table(network: imodel.IModel, axes: List[Tuple[str, Tuple[float, floa
         the first k columns contain the response of the neural network,
         and the last n columns in each row are the values of the variables in the same order as they were input
     """
-    if axes:                                            # if there is non-visited variables
+    if axes:  # if there is non-visited variables
         if acc is None:
             acc = np.array([])
-        curr_axis = axes.pop()                          # take last variable (left, right, step)
+        curr_axis = axes.pop()  # take last variable (left, right, step)
         solution_table = []
-        i = curr_axis[1][0]                             # left bound
-        while i <= curr_axis[1][1]:                     # i less than right bound
-            tacc = np.append(acc, [i])                  # add i to acc
-            res = _build_table(network, axes, tacc)     # go to next variable
+        i = curr_axis[1][0]  # left bound
+        while i <= curr_axis[1][1]:  # i less than right bound
+            tacc = np.append(acc, [i])  # add i to acc
+            res = _build_table(network, axes, tacc)  # go to next variable
             for temp in res:
                 temp.append(i)
                 solution_table.append(temp)
-            i += curr_axis[1][2]                        # i = i + step
-        axes.append(curr_axis)                          # return variable back to axes and go to previous variable
-        return solution_table                           # return m arrays like [xn, xn-1, ..., x3, x2, x1, y]
+            i += curr_axis[1][2]  # i = i + step
+        axes.append(
+            curr_axis
+        )  # return variable back to axes and go to previous variable
+        return solution_table  # return m arrays like [xn, xn-1, ..., x3, x2, x1, y]
     elif acc is not None:
-        temp = network.feedforward(acc)                 # get network answer for X vector
-        res = temp.numpy().tolist()                     # transform tf.Tensor to python list
+        temp = network.feedforward(acc)  # get network answer for X vector
+        res = temp.numpy().tolist()  # transform tf.Tensor to python list
         return res
 
 
-def build_table(network: imodel.IModel, axes: List[Tuple[str, Tuple[float, float, float]]]) -> List:
+def build_table(
+    network: imodel.IModel, axes: List[Tuple[str, Tuple[float, float, float]]]
+) -> List:
     """
     Builds a solution table on the interval given for each variable with the given step.
 
@@ -64,14 +70,16 @@ def build_table(network: imodel.IModel, axes: List[Tuple[str, Tuple[float, float
         and the last k columns contain the response of the neural network
     """
     table = _build_table(network, axes)
-    res = []                                            # array of pairs of X vector and Y vector
+    res = []  # array of pairs of X vector and Y vector
     k = network.get_output_size
     for i in table:
         res.append([*i[k:], *i[:k]])
     return res
 
 
-def _equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]]) -> list:
+def _equation_solve(
+    eq: str, axes: list[tuple[str, tuple[float, float, float]]]
+) -> list:
     """
     Supporting method for building a table with solutions of the given equation in points.
 
@@ -88,25 +96,31 @@ def _equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]])
         the first 1 column contain the result of the expression,
         and the last n columns in each row are the values of the variables in the same order as they were input
     """
-    if axes:                                                            # if there is non-visited variables
-        curr_axis = axes.pop()                                          # take last variable (left, right, step)
+    if axes:  # if there is non-visited variables
+        curr_axis = axes.pop()  # take last variable (left, right, step)
         solution_table = []
-        i = curr_axis[1][0]                                             # left bound
-        while i <= curr_axis[1][1]:                                     # i less than right bound
-            teq = eq.replace(curr_axis[0], "(" + str(i) + ")")          # replace in string repr *var_name* by i
-            res = _equation_solve(teq, axes)                            # go to next variable
+        i = curr_axis[1][0]  # left bound
+        while i <= curr_axis[1][1]:  # i less than right bound
+            teq = eq.replace(
+                curr_axis[0], "(" + str(i) + ")"
+            )  # replace in string repr *var_name* by i
+            res = _equation_solve(teq, axes)  # go to next variable
             for temp in res:
                 temp.append(i)
                 solution_table.append(temp)
-            i += curr_axis[1][2]                                        # i = i + step
-        axes.append(curr_axis)                                          # return variable back to axes and go to previous variable
-        return solution_table                                           # return m arrays like [xn, xn-1, ..., x3, x2, x1, y]
+            i += curr_axis[1][2]  # i = i + step
+        axes.append(
+            curr_axis
+        )  # return variable back to axes and go to previous variable
+        return solution_table  # return m arrays like [xn, xn-1, ..., x3, x2, x1, y]
     else:
         eq_calc = compile(eq, "eq_compile_log.txt", "eval")
         return [[eval(eq_calc)]]
 
 
-def equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]], debug=False) -> np.ndarray:
+def equation_solve(
+    eq: str, axes: list[tuple[str, tuple[float, float, float]]], debug=False
+) -> np.ndarray:
     """
     Method for building a table with solutions of the given equation in points.
 
@@ -140,7 +154,7 @@ def equation_solve(eq: str, axes: list[tuple[str, tuple[float, float, float]]], 
             y = res[:, 1:].T
 
             for i, y_i in enumerate(y):
-                plt.plot(t, y_i, '-', label=f'{i}')
+                plt.plot(t, y_i, "-", label=f"{i}")
             plt.legend()
             plt.show()
     return res

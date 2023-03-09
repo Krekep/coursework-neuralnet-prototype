@@ -47,3 +47,7 @@ def deserialize(name: str, is_decorator: bool = False, **kwargs):
 
 def get(name: str):
     return _activation_name[name]
+
+
+def get_all_activations() -> dict:
+    return _activation_name
