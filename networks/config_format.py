@@ -14,6 +14,6 @@ LAYER_DICT_NAMES = {
 
 HEADER_OF_FILE = """
 Package: GANN
-version: 0.1
+version: 0.2
 Author: Alimov Pavel Gennadievich
 """

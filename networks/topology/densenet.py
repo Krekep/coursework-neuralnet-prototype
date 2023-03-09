@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Dict
 
 import tensorflow as tf
 from tensorflow import keras
@@ -19,7 +19,7 @@ class DenseNet(tf.keras.Model):
         **kwargs,
     ):
         activation_names = None
-        decorator_params = None
+        decorator_params: List[Optional[Dict]] = [None]
         if "activation_names" in kwargs.keys():
             activation_names = kwargs.get("activation_names")
             kwargs.pop("activation_names")
@@ -30,10 +30,22 @@ class DenseNet(tf.keras.Model):
             decorator_params = kwargs.get("decorator_params")
             kwargs.pop("decorator_params")
         else:
-            decorator_params = None
+            decorator_params = [None]
 
-        if decorator_params is None:
+        if (
+            isinstance(decorator_params, list)
+            and len(decorator_params) == 1
+            and decorator_params[0] is None
+            or decorator_params is None
+        ):
             decorator_params = [None] * (len(block_size) + 1)
+
+        if (
+            isinstance(decorator_params, list)
+            and len(decorator_params) == 1
+            and decorator_params[0] is not None
+        ):
+            decorator_params = decorator_params * (len(block_size) + 1)
 
         super(DenseNet, self).__init__(**kwargs)
         self.blocks = []

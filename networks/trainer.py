@@ -62,13 +62,9 @@ def _create_random_network(
     all_act_names = list(activations.get_all_activations().keys())
     for _ in shape:
         act_names.append(random.choice(all_act_names))
-        if act_names[-1] in activations._decorated_activation:
-            # TODO: decorator can take more than 1 argument, and it should be random
-            # but at this moment I have only perceptron_threshold
-            act.append(activations.get(act_names[-1])(1))
-            decorator_param.append(1)
-        else:
-            decorator_param.append(None)
+        # TODO: activation func can take additional arguments
+        # but at this moment I dont create random arguments (insted of *None* in decorator_params)
+        decorator_param.append(None)
     act_names.append("linear")
     act.append(activations.get("linear"))
     decorator_param.append(None)
@@ -283,9 +279,7 @@ def full_search(
             shape,
             [activations.get(activation)] * len(shape) + [activations.get("linear")],
             [activation] * len(shape) + ["linear"],
-            [None] * (len(shape) + 1)
-            if activation not in activations._decorated_activation
-            else [1] * len(shape) + [None],
+            [None] * (len(shape) + 1),
         ]
         for activation in activation_funcs
         for shape in nets_shape

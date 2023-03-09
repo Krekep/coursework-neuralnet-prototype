@@ -1,6 +1,6 @@
 import os
 from collections import defaultdict
-from typing import List, Callable
+from typing import List, Callable, Optional, Dict
 import json
 
 import keras
@@ -14,12 +14,23 @@ from networks.config_format import LAYER_DICT_NAMES, HEADER_OF_FILE
 from networks.topology.densenet import DenseNet
 
 
-def _get_act_and_init(kwargs: dict, default_act, default_init):
+def _get_act_and_init(
+    kwargs: dict,
+    default_act,
+    default_dec: Optional[List[Optional[Dict[str, float]]]],
+    default_init,
+):
     if kwargs.get("activation") is None:
         activation = default_act
     else:
         activation = kwargs["activation"]
         kwargs.pop("activation")
+
+    if kwargs.get("decorator_params") is None:
+        decorator_params = default_dec
+    else:
+        decorator_params = kwargs["decorator_params"]
+        kwargs.pop("decorator_params")
 
     if kwargs.get("weight") is None:
         weight = default_init
@@ -33,7 +44,7 @@ def _get_act_and_init(kwargs: dict, default_act, default_init):
         biases = kwargs["biases"]
         kwargs.pop("biases")
 
-    return activation, weight, biases, kwargs
+    return activation, decorator_params, weight, biases, kwargs
 
 
 class IModel(object):
@@ -316,6 +327,7 @@ class IModel(object):
     def from_file(self, path, **kwargs):
         with open(path + ".apg", "r") as f:
             for header in range(HEADER_OF_FILE.count("\n")):
+                # TODO: check version compability
                 _ = f.readline()
             config = json.loads(f.readline())
             self.network.from_dict(config)
@@ -392,49 +404,45 @@ class IModel(object):
 
     @classmethod
     def create_neuron(cls, input_size, output_size, shape, **kwargs):
-        activation, weight, biases, kwargs = _get_act_and_init(
+        activation, decorator_params, weight, biases, kwargs = _get_act_and_init(
             kwargs,
             keras.activations.sigmoid,
+            None,
             tf.random_normal_initializer(),
         )
 
-        try:
-            res = cls(
-                input_size=input_size,
-                block_size=shape,
-                output_size=output_size,
-                activation_func=activation,
-                bias_init=biases,
-                weight_init=weight,
-                **kwargs,
-            )
-        except Exception as e:
-            print(e)
-            res = None
+        res = cls(
+            input_size=input_size,
+            block_size=shape,
+            output_size=output_size,
+            activation_func=activation,
+            bias_init=biases,
+            weight_init=weight,
+            decorator_params=decorator_params,
+            **kwargs,
+        )
 
         return res
 
     @classmethod
     def create_perceptron(cls, input_size, output_size, shape, threshold=1, **kwargs):
-        activation, weight, biases, kwargs = _get_act_and_init(
+        activation, decorator_params, weight, biases, kwargs = _get_act_and_init(
             kwargs,
-            activations.perceptron_threshold(threshold),
+            activations.perceptron_threshold,
+            [{"threshold": threshold}],
             tf.random_normal_initializer(),
         )
 
-        try:
-            res = cls(
-                input_size=input_size,
-                block_size=shape,
-                output_size=output_size,
-                activation_func=activation,
-                bias_init=biases,
-                weight_init=weight,
-                **kwargs,
-            )
-        except Exception as e:
-            print(e)
-            res = None
+        res = cls(
+            input_size=input_size,
+            block_size=shape,
+            output_size=output_size,
+            activation_func=activation,
+            bias_init=biases,
+            weight_init=weight,
+            decorator_params=decorator_params,
+            **kwargs,
+        )
 
         return res
 

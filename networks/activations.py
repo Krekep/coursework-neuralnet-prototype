@@ -3,15 +3,8 @@ from typing import Callable
 import tensorflow as tf
 
 
-def perceptron_threshold(threshold):
-    def activation(x):
-        return tf.where(x >= threshold, 1.0, 0.0)
-
-    return activation
-
-
-# _decorated_activation = {'perceptron_threshold', 'elu', 'gelu', 'relu'}
-_decorated_activation = {"perceptron_threshold"}
+def perceptron_threshold(x, threshold: float = 1):
+    return tf.where(x >= threshold, 1.0, 0.0)
 
 
 _activation_name = {

@@ -19,24 +19,19 @@ from tests.utils import array_compare, init_params, file_compare
             np.array([[1, 1], [1, 1]], dtype=float),
             [2, [1], 2],
             ["perceptron_threshold"],
-            [1],
+            [{"threshold": 1}],
         ),
         (
             np.array([[1, 1], [1, 1]], dtype=float),
             [2, [1], 1],
             ["perceptron_threshold"],
-            [2],
+            [{"threshold": 2}],
         ),
     ],
 )
 def test_predict_is_same(inp, shape, act_init, decorator_params):
     act_func = tests.utils.init_params(act_name=act_init)
     act_names = [act_init] if not isinstance(act_init, list) else act_init
-    if isinstance(act_func, list):
-        for i in range(len(act_func)):
-            act_names.append(act_init[i])
-            if act_init[i] in networks.activations._decorated_activation:
-                act_func[i] = act_func[i](decorator_params)
     nn = IModel(
         shape[0],
         shape[1],

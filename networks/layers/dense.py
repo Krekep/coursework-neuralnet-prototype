@@ -1,9 +1,33 @@
+from typing import Optional, List, Tuple, Dict
+
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 
 from networks import activations
 from networks.config_format import LAYER_DICT_NAMES
+
+
+def _dec_params_to_list(
+    params: Optional[Dict[str, float]]
+) -> Optional[List[Tuple[str, float]]]:
+    if params is None:
+        return None
+    res = []
+    for key in params:
+        res.append((key, params[key]))
+    return res
+
+
+def _dec_params_from_list(
+    params: Optional[List[Tuple[str, float]]]
+) -> Optional[Dict[str, float]]:
+    if params is None:
+        return None
+    res = {}
+    for pair in params:
+        res[pair[0]] = pair[1]
+    return res
 
 
 class MyDense(keras.layers.Layer):
@@ -27,8 +51,8 @@ class MyDense(keras.layers.Layer):
             decorator_params = kwargs.get("decorator_params")
             kwargs.pop("decorator_params")
 
-        if not isinstance(decorator_params, list):
-            decorator_params = [decorator_params]
+        if not isinstance(decorator_params, dict) and decorator_params is not None:
+            raise "Additional parameters for activation function must be dictionary"
 
         if input_dim == 0 or units == 0:
             raise "Layer cannot have zero inputs or zero size"
@@ -51,12 +75,15 @@ class MyDense(keras.layers.Layer):
         self.weight_initializer = weight_initializer
         self.bias_initializer = bias_initializer
         self.activation_name = activation_names
-        self.decorator_params = decorator_params
+        self.decorator_params: Optional[dict] = decorator_params
 
     def call(self, inputs, **kwargs):
         f = tf.matmul(inputs, self.w)
         s = f + self.b
-        return self.activation_func(s, **kwargs)
+        if self.decorator_params is None:
+            return self.activation_func(s)
+        else:
+            return self.activation_func(s, **self.decorator_params)
 
     def __str__(self):
         res = f"Layer {self.name}\n"
@@ -94,10 +121,10 @@ class MyDense(keras.layers.Layer):
             LAYER_DICT_NAMES["activation"]: self.activation_func.__name__
             if self.activation_name is None
             else self.activation_name,
+            LAYER_DICT_NAMES["decorator_params"]: _dec_params_to_list(
+                self.decorator_params
+            ),
         }
-
-        if self.activation_name in activations._decorated_activation:
-            res.update({LAYER_DICT_NAMES["decorator_params"]: self.decorator_params})
 
         return res
 
@@ -105,6 +132,7 @@ class MyDense(keras.layers.Layer):
         w = config[LAYER_DICT_NAMES["weights"]]
         b = config[LAYER_DICT_NAMES["biases"]]
         act = config[LAYER_DICT_NAMES["activation"]]
+        dec_params = _dec_params_from_list(config[LAYER_DICT_NAMES["decorator_params"]])
         self.w = tf.Variable(
             initial_value=w,
             dtype=config[LAYER_DICT_NAMES["dtype"]],
@@ -113,14 +141,9 @@ class MyDense(keras.layers.Layer):
         self.b = tf.Variable(
             initial_value=b, dtype=config[LAYER_DICT_NAMES["dtype"]], trainable=True
         )
-        if act in activations._decorated_activation:
-            params = config[LAYER_DICT_NAMES["decorator_params"]]
-            self.activation_func = activations.deserialize(act)(params)
-            self.activation_name = act
-            self.decorator_params = params
-        else:
-            self.activation_func = activations.deserialize(act)
-            self.activation_name = act
+        self.activation_func = activations.deserialize(act)
+        self.activation_name = act
+        self.decorator_params = dec_params
 
     @classmethod
     def from_config(cls, config):
