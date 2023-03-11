@@ -60,12 +60,12 @@ class MyDense(keras.layers.Layer):
         super(MyDense, self).__init__(**kwargs)
         w_init = weight_initializer
         self.w = tf.Variable(
-            initial_value=w_init(shape=(input_dim, units), dtype="float32"),
+            initial_value=w_init(shape=(input_dim, units), dtype="float32"), name=f"Var_w_{self.name}",
             trainable=True,
         )
         b_init = bias_initializer
         self.b = tf.Variable(
-            initial_value=b_init(shape=(units,), dtype="float32"), trainable=True
+            initial_value=b_init(shape=(units,), dtype="float32"), name=f"Var_w_{self.name}", trainable=True
         )
 
         self.units = units
@@ -89,8 +89,9 @@ class MyDense(keras.layers.Layer):
         res = f"Layer {self.name}\n"
         res += f"weights shape = {self.w.shape}\n"
         if self._is_debug:
-            res += f"weights = {self.w.numpy()}\n"
-            res += f"biases = {self.b.numpy()}\n"
+            # res += f"weights = {self.w.numpy()}\n"
+            # res += f"biases = {self.b.numpy()}\n"
+            res += f"activation = {self.activation_name}\n"
         return res
 
     def get_config(self):

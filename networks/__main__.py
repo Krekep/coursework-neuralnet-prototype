@@ -1,6 +1,5 @@
 from networks import activations
 from networks.topology.densenet import DenseNet
-from networks.ilayer import ILayer
 from networks.imodel import IModel
 from networks.layers.dense import MyDense
 from tests.utils import init_params

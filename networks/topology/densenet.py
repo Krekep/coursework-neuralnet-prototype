@@ -3,7 +3,8 @@ from typing import List, Optional, Dict
 import tensorflow as tf
 from tensorflow import keras
 
-from networks.ilayer import ILayer
+from networks import layer_creator
+from networks.layers.dense import MyDense
 
 
 class DenseNet(tf.keras.Model):
@@ -54,7 +55,7 @@ class DenseNet(tf.keras.Model):
             activation_func = [activation_func] * (len(block_size) + 1)
         if len(block_size) != 0:
             self.blocks.append(
-                ILayer.create_dense(
+                layer_creator.create_dense(
                     input_size,
                     block_size[0],
                     activation=activation_func[0],
@@ -68,7 +69,7 @@ class DenseNet(tf.keras.Model):
             )
             for i in range(1, len(block_size)):
                 self.blocks.append(
-                    ILayer.create_dense(
+                    layer_creator.create_dense(
                         block_size[i - 1],
                         block_size[i],
                         activation=activation_func[i],
@@ -83,14 +84,14 @@ class DenseNet(tf.keras.Model):
         else:
             block_size = [input_size]
 
-        self.classifier = ILayer.create_dense(
+        self.classifier = layer_creator.create_dense(
             block_size[-1],
             output_size,
             activation=activation_func[-1],
             weight=weight,
             bias=biases,
             is_debug=is_debug,
-            name=f"OutputLayerMyDense",
+            name=f"ClassifierLayerMyDense",
             activation_names=activation_names[-1],
             decorator_params=decorator_params[-1],
         )
@@ -146,7 +147,7 @@ class DenseNet(tf.keras.Model):
         res = f"IModel {self.name}\n"
         for layer in self.blocks:
             res += str(layer)
-        res += "Classifier to string not implemented\n"
+        res += str(self.classifier)
         return res
 
     def to_dict(self, **kwargs):
@@ -173,7 +174,7 @@ class DenseNet(tf.keras.Model):
         input_size: int,
         block_size: List[int],
         output_size: int,
-        layers: List[ILayer],
+        layers: List[MyDense],
         **kwargs,
     ):
         res = cls(
@@ -193,14 +194,14 @@ class DenseNet(tf.keras.Model):
         block_size = config["block_size"]
         output_size = config["output_size"]
 
-        layers: List[ILayer] = []
+        layers: List[MyDense] = []
         for layer_config in config["layer"]:
-            layers.append(ILayer.from_dict(layer_config))
+            layers.append(layer_creator.from_dict(layer_config))
 
         for layer_num in range(len(self.blocks)):
             self.blocks[layer_num] = layers[layer_num]
 
-        self.classifier = ILayer.from_dict(config["classifier"])
+        self.classifier = layer_creator.from_dict(config["classifier"])
 
     def get_config(self):
         config = super(

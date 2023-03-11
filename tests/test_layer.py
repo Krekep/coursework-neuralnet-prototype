@@ -3,7 +3,7 @@ import keras.initializers
 import numpy as np
 import pytest
 
-from networks.ilayer import ILayer
+from networks import layer_creator
 from networks.layers.dense import MyDense
 from tests.utils import array_compare, init_params
 
@@ -22,7 +22,7 @@ from tests.utils import array_compare, init_params
 def test_create_layer(inp, shape, activation, biases, expected):
     act_func, bias_initializer = init_params(act_name=activation, bias_name=biases)
     try:
-        _ = ILayer.create_dense(
+        _ = layer_creator.create_dense(
             inp_size=inp, shape=shape, activation=act_func, bias=bias_initializer
         )
         assert expected
@@ -150,7 +150,7 @@ def test_layer_call(inp, shape, act_init, w_init, b_init, expected):
         act_name=act_init, weight_name=w_init, bias_name=b_init
     )
 
-    layer = ILayer.create_dense(
+    layer = layer_creator.create_dense(
         inp_size=shape[0],
         shape=shape[1],
         activation=act_func,

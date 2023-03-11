@@ -10,7 +10,7 @@ from tensorflow import keras
 
 class RelativeError(tf.keras.losses.Loss, ABC):
     def __init__(
-        self, reduction=tf.keras.losses.Reduction.NONE, name="relative", **kwargs
+            self, reduction=tf.keras.losses.Reduction.NONE, name="relative", **kwargs
     ):
         super(RelativeError, self).__init__(reduction=reduction, name=name, **kwargs)
 
@@ -32,8 +32,9 @@ class RelativeAbsoluteError(tf.keras.losses.Loss, ABC):
         squared_error_num = tf.reduce_sum(tf.abs(y_true - y_pred))
         squared_error_den = tf.reduce_sum(tf.abs(y_true - true_mean))
 
-        if squared_error_den == 0:
-            squared_error_den = 1
+        squared_error_den = tf.cond(pred=squared_error_den == tf.constant(0.0),
+                                    true_fn=lambda: tf.constant(1.0),
+                                    false_fn=lambda: squared_error_den)
 
         loss = squared_error_num / squared_error_den
         return loss
@@ -41,7 +42,7 @@ class RelativeAbsoluteError(tf.keras.losses.Loss, ABC):
 
 class MaxAbsoluteDeviation(tf.keras.losses.Loss, ABC):
     def __init__(
-        self, reduction=tf.keras.losses.Reduction.NONE, name="my_mae", **kwargs
+            self, reduction=tf.keras.losses.Reduction.NONE, name="my_mae", **kwargs
     ):
         super(MaxAbsoluteDeviation, self).__init__(
             reduction=reduction, name=name, **kwargs
@@ -55,11 +56,11 @@ class MaxAbsoluteDeviation(tf.keras.losses.Loss, ABC):
 # Non-differentiable
 class InlierRatio(tf.keras.losses.Loss, ABC):
     def __init__(
-        self,
-        reduction=tf.keras.losses.Reduction.NONE,
-        name="inlier_ratio",
-        treeshold=0.05,
-        **kwargs
+            self,
+            reduction=tf.keras.losses.Reduction.NONE,
+            name="inlier_ratio",
+            treeshold=0.05,
+            **kwargs
     ):
         super(InlierRatio, self).__init__(reduction=reduction, name=name, **kwargs)
         self.treeshold = treeshold
@@ -72,34 +73,34 @@ class InlierRatio(tf.keras.losses.Loss, ABC):
 
 class MaxDeviation(tf.keras.losses.Loss, ABC):
     def __init__(
-        self,
-        reduction=tf.keras.losses.Reduction.NONE,
-        name="max_deviation",
-        treeshold=0.05,
-        **kwargs
+            self,
+            reduction=tf.keras.losses.Reduction.NONE,
+            name="max_deviation",
+            treeshold=0.05,
+            **kwargs
     ):
         super(MaxDeviation, self).__init__(reduction=reduction, name=name, **kwargs)
         self.treeshold = treeshold
 
     def __call__(self, y_true, y_pred, sample_weight=None):
-        y = tf.math.divide((y_true - y_pred), tf.where(y_true == 0, 1, y_true))
+        y = tf.math.divide((y_true - y_pred), tf.where(y_true == 0.0, 1.0, y_true))
         loss = tf.math.reduce_max(tf.where(tf.abs(y) <= self.treeshold, 0.0, abs(y)))
         return loss
 
 
 class MeanDeviation(tf.keras.losses.Loss, ABC):
     def __init__(
-        self,
-        reduction=tf.keras.losses.Reduction.NONE,
-        name="mean_deviation",
-        treeshold=0.05,
-        **kwargs
+            self,
+            reduction=tf.keras.losses.Reduction.NONE,
+            name="mean_deviation",
+            treeshold=0.05,
+            **kwargs
     ):
         super(MeanDeviation, self).__init__(reduction=reduction, name=name, **kwargs)
         self.treeshold = treeshold
 
     def __call__(self, y_true, y_pred, sample_weight=None):
-        y = tf.math.divide((y_true - y_pred), tf.where(y_true == 0, 1, y_true))
+        y = tf.math.divide((y_true - y_pred), tf.where(y_true == 0.0, 1.0, y_true))
         loss = tf.math.reduce_mean(
             tf.where(tf.abs(y) <= self.treeshold, self.treeshold, abs(y))
         )
@@ -117,12 +118,12 @@ _losses: dict = {
     # "SparseCategoricalCrossentropy": keras.losses.SparseCategoricalCrossentropy(),  # Not usable in my task
     # "SquaredHinge": keras.losses.SquaredHinge(),                                    # Not usable in my task
     "Huber": keras.losses.Huber(),
-    "KLDivergence": keras.losses.KLDivergence(),
-    "LogCosh": keras.losses.LogCosh(),
-    "MeanAbsoluteError": keras.losses.MeanAbsoluteError(),
+    "KLDivergence": keras.losses.KLDivergence(),              # If you're using `model.compile()`, did you forget to provide a `loss`argument?
+    "LogCosh": keras.losses.LogCosh(),                        # If you're using `model.compile()`, did you forget to provide a `loss`argument?
+    "MeanAbsoluteError": keras.losses.MeanAbsoluteError(),    # If you're using `model.compile()`, did you forget to provide a `loss`argument?
     "MeanAbsolutePercentageError": keras.losses.MeanAbsolutePercentageError(),
     "MeanSquaredError": keras.losses.MeanSquaredError(),
-    "MeanSquaredLogarithmicError": keras.losses.MeanSquaredLogarithmicError(),
+    "MeanSquaredLogarithmicError": keras.losses.MeanSquaredLogarithmicError(),  # If you're using `model.compile()`, did you forget to provide a `loss`argument?
     "Poisson": keras.losses.Poisson(),
     "RelativeError": RelativeError(),
     "RelativeAbsoluteError": RelativeAbsoluteError(),
@@ -153,9 +154,9 @@ _metrics: dict = {
     # "TrueNegatives": keras.metrics.TrueNegatives(),                                     # Not usable in my task
     # "TruePositives": keras.metrics.TruePositives(),                                     # Not usable in my task
     #
-    "Mean": keras.metrics.Mean(),  # Not usable in my task?
+    # "Mean": keras.metrics.Mean(),  # Not usable in my task? Take only one collection of values (not y_true and y_pred)
     # "MeanRelativeError": keras.metrics.MeanRelativeError( * need normalizer |y_true - y_pred| / normalizer * ),                             # Not usable in my task?
-    "MeanTensor": keras.metrics.MeanTensor(),  # Not usable in my task?
+    # "MeanTensor": keras.metrics.MeanTensor(),  # Not usable in my task? Take only one collection of values (not y_true and y_pred)
     "RootMeanSquaredError": keras.metrics.RootMeanSquaredError(),
     "InlierRatio": InlierRatio(),
     "MaxDeviation": MaxDeviation(),

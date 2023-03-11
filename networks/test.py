@@ -168,10 +168,19 @@ def f_x(x):
     return 2 * x
 
 
+def f_x2(x):
+    return x ** 2
+
+
 def f_x_z(x, z):
     return 2 * x - z
 
 
 x_data = np.array([[i / 10] for i in range(0, 101)])
-f_x_data = np.array([[f_x(x)] for x in x_data])
-trainer.full_search(x_data, f_x_data)
+f_x_data = np.array([f_x(x) for x in x_data])
+networks = trainer.full_search(x_data, f_x_data)
+for nn in networks:
+    # print(nn)
+    print(nn[0]["loss_func"], nn[0]["normalize"], nn[0]["epochs"], nn[0]["optimizer"], end='\n')
+    print(nn[1], nn[2], str(nn[3]))
+    print("***********")

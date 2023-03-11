@@ -23,13 +23,13 @@ _default_shapes = [
 
 
 def _create_random_network(
-    inp: int,
-    out: int,
-    min_layers=1,
-    max_layers=5,
-    min_neurons=3,
-    max_neurons=60,
-    args=None,
+        inp: int,
+        out: int,
+        min_layers=1,
+        max_layers=5,
+        min_neurons=3,
+        max_neurons=60,
+        args=None,
 ) -> imodel.IModel:
     """
     Create random neural network from the passed parameters.
@@ -85,7 +85,7 @@ def _create_random_network(
 
 
 def _normalize_two_array(
-    x: np.ndarray, y: np.ndarray
+        x: np.ndarray, y: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     m = max(abs(np.amax(x)), abs(np.amax(y)))
     if m < 1:
@@ -104,7 +104,7 @@ def _normalize_array(x: np.ndarray) -> Tuple[np.ndarray, float]:
 
 
 def train(
-    x_data: np.ndarray, y_data: np.ndarray, **kwargs
+        x_data: np.ndarray, y_data: np.ndarray, **kwargs
 ) -> Union[
     Tuple[imodel.IModel, tf.keras.callbacks.History],
     Tuple[List[imodel.IModel], tf.keras.callbacks.History],
@@ -249,7 +249,7 @@ def train(
         if history[i].history["loss"][-1] < min_err:
             min_err = history[i].history["loss"][-1]
             result_net = nets[i]
-            result_history = result_history[i]
+            result_history = history[i]
     if args["debug"]:
         print(f"Minimal loss error is {min_err} {args['name_salt']}")
     if args["experiments"]:
@@ -258,8 +258,8 @@ def train(
 
 
 def full_search(
-    x_data: np.ndarray, y_data: np.ndarray, **kwargs
-) -> list[list[float, float, imodel.IModel]]:
+        x_data: np.ndarray, y_data: np.ndarray, **kwargs
+) -> list[list[dict, float, float, imodel.IModel]]:
     """
     Choose and return neural network which present the minimal average absolute deviation.
     x_data and y_data is numpy 2d arrays (in case we don't have multiple-layer input/output).
@@ -279,20 +279,27 @@ def full_search(
     # Networks parameters --- shape and activation functions
     nets_shape = _default_shapes
     activation_funcs = activations.get_all_activations()
-    nets_param = [
-        [
-            shape,
-            [activations.get(activation)] * len(shape) + [activations.get("linear")],
-            [activation] * len(shape) + ["linear"],
-            [None] * (len(shape) + 1),
-        ]
-        for activation in activation_funcs
-        for shape in nets_shape
-    ]
+    nets_param = []
+    for shape in nets_shape:
+        if len(shape) != 0:
+            for activation in activation_funcs:
+                nets_param.append([
+                    shape,
+                    [activations.get(activation)] * len(shape) + [activations.get("linear")],
+                    [activation] * len(shape) + ["linear"],
+                    [None] * (len(shape) + 1),
+                ])
+        else:
+            nets_param.append([
+                shape,
+                [activations.get("linear")],
+                ["linear"],
+                [None],
+            ])
 
     # Training algorithms
-    # optimizers = [tf.keras.optimizers.SGD, tf.keras.optimizers.Adam, tf.keras.optimizers.RMSprop]
-    optimizers = [tf.keras.optimizers.SGD]
+    optimizers = [tf.keras.optimizers.SGD, tf.keras.optimizers.Adam, tf.keras.optimizers.RMSprop]
+    # optimizers = [tf.keras.optimizers.SGD]
 
     # Should we do data normalize before training
     # normalize_data = [False, True]
@@ -300,7 +307,7 @@ def full_search(
 
     # Full train iteration over data
     epochs_data = [50]
-    # epochs_data = [50, 200, 500, 1000, 2000]
+    # epochs_data = [50, 200, 500, 1000]
 
     # Learning step
     # rates = [1e-2, 5e-3, 1e-3]
@@ -313,8 +320,8 @@ def full_search(
     ]
 
     # Loss function for training
-    # losses_functions = losses.get_all_loss_functions()
-    losses_functions = {"MeanSquaredError": losses.get_loss("MeanSquaredError")}
+    losses_functions = losses.get_all_loss_functions()
+    # losses_functions = {"MeanSquaredError": losses.get_loss("MeanSquaredError")}
 
     # Training metrics
     metrics = [
@@ -344,27 +351,30 @@ def full_search(
                             metaparams[-1]["nets_param"] = nets_param
                             metaparams[-1].update(kwargs)
 
-    best_nets: List[List[float, float, imodel.IModel]] = []
+    best_nets: List[List[dict, float, float, imodel.IModel]] = []
     for i, params in enumerate(metaparams):
         trained, history = train(x_data, y_data, **params)
-        loss = history.history["loss"][-1]
-        val_loss = history.history["val_loss"][-1]
-        best_nets.append([loss, val_loss, trained])
+        if kwargs.get("experiments"):
+            best_nets.append([params, trained, history])
+        else:
+            loss = history.history["loss"][-1]
+            val_loss = history.history["val_loss"][-1]
+            best_nets.append([params, loss, val_loss, trained])
 
-    best_nets.sort(key=lambda x: [x[0], x[1]])
+    best_nets.sort(key=lambda x: [x[1], x[2]])
 
     return best_nets
 
 
 def _load_network_shapes():
     return [
-        [10, 10, 10],
-        [10, 10, 10, 10, 10, 10],
-        [4, 8, 16, 32, 64],
-        [4, 8, 16],
-        [64, 32, 16, 8, 4],
-        [16, 8, 4],
-        [100, 100, 100],
+        # [10, 10, 10],
+        # [10, 10, 10, 10, 10, 10],
+        # [4, 8, 16, 32, 64],
+        # [4, 8, 16],
+        # [64, 32, 16, 8, 4],
+        # [16, 8, 4],
+        # [100, 100, 100],
         [],
     ]
     # res = []
