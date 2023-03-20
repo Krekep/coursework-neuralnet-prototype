@@ -361,8 +361,10 @@ def full_search(
             val_loss = history.history["val_loss"][-1]
             best_nets.append([params, loss, val_loss, trained])
 
-    best_nets.sort(key=lambda x: [x[1], x[2]])
+    if kwargs.get("experiments"):
+        return best_nets
 
+    best_nets.sort(key=lambda x: [x[1], x[2]])
     return best_nets
 
 

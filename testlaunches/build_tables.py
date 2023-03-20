@@ -48,66 +48,60 @@ def prepare_uniform_interval(interval: Tuple[float, float], step: float):
 
 
 list_sol_functions = [
-    LF_ODE_1_solution,
-    LF_ODE_2_solution,
-    LF_ODE_3_solution,
-    ST_LF_ODE_1_solution,
-    LH_ODE_1_solution,
-    LH_ODE_2_solution,
-    S_ODE_1_solution,
+    (LF_ODE_1_solution, (0, 1)),
+    (LF_ODE_2_solution, (0, 1)),
+    (LF_ODE_3_solution, (0, 1)),
+    (NLF_ODE_1_solution, (0.1, 1)),
+    (NLF_ODE_2_solution, (0.1, 1)),
+    (NLF_ODE_3_solution, (0.1, 1)),
+    (NLF_ODE_4_solution, (0.1, 1)),
+    (ST_LF_ODE_1_solution, (0, 1)),
+    (LH_ODE_1_solution, (0, 1)),
+    (LH_ODE_2_solution, (0, 1)),
+    (S_ODE_1_solution, (0, 1)),
 ]
 
-list_table_functions = [S_ODE_2_table, ST_LH_ODE_2_table, ST_S_ODE_3_table]
-interval_for_table_func = [(0, np.pi), (0.1, 1), (0, 40)]
+list_table_functions = [
+    (S_ODE_2_table, (0, np.pi)),
+    (ST_LH_ODE_2_table, (0, 1)),
+    (ST_S_ODE_3_table, (0, 40)),
+]
 
 if __name__ == "__main__":
     step = 0.05
     for i in range(3):
-        func = list_table_functions[i]
-        x = prepare_uniform_interval(interval_for_table_func[i], step)
+        func = list_table_functions[i][0]
+        interval = list_table_functions[i][1]
+        x = prepare_uniform_interval(interval, step)
         table = func(x)
         np.savetxt(
-            f"./solution_tables/{func.__name__}.csv", table, delimiter=","
+            f"./solution_tables/data/{func.__name__}.csv", table, delimiter=","
         )
 
     step = 0.05
-    for i in range(0, 4):
-        func = list_sol_functions[i]
-        x = prepare_uniform_interval((0, 1), step)
+    for i in range(0, 11):
+        func = list_sol_functions[i][0]
+        interval = list_sol_functions[i][1]
+        x = prepare_uniform_interval(interval, step)
         y = [func(i) for i in x]
-        table = np.array([x, y])
-        table = table.transpose()
+        z = []
+        for j in range(len(x)):
+            if isinstance(y[j], tuple) or isinstance(y[j], list):
+                z.append([x[j]] + list(y[j]))
+            else:
+                z.append([x[j], y[j]])
+        table = np.array(z)
+        # table = table.transpose()
         np.savetxt(
-            f"./solution_tables/{func.__name__}.csv", table, delimiter=","
-        )
-
-    step = 0.05
-    for i in range(4, 6):
-        func = list_sol_functions[i]
-        x = prepare_uniform_interval((0.1, 1), step)
-        y = [func(i) for i in x]
-        table = np.array([x, y])
-        table = table.transpose()
-        np.savetxt(
-            f"./solution_tables/{func.__name__}.csv", table, delimiter=","
-        )
-
-    step = 0.05
-    for i in range(6, 7):
-        func = list_sol_functions[i]
-        x = prepare_uniform_interval((0, 1), step)
-        y = np.array([func(i) for i in x])
-        x = np.array([x]).T
-        table = np.hstack([x, y])
-        np.savetxt(
-            f"./solution_tables/{func.__name__}.csv", table, delimiter=","
+            f"./solution_tables/data/{func.__name__}.csv", table, delimiter=","
         )
 
     # build validation data
     step = 0.001
     for i in range(3):
-        func = list_table_functions[i]
-        x = prepare_uniform_interval(interval_for_table_func[i], step)
+        func = list_table_functions[i][0]
+        interval = list_table_functions[i][1]
+        x = prepare_uniform_interval(interval, step)
         table = func(x)
         np.savetxt(
             f"./solution_tables/validation_data/{func.__name__}.csv",
@@ -116,38 +110,19 @@ if __name__ == "__main__":
         )
 
     step = 0.001
-    for i in range(0, 4):
-        func = list_sol_functions[i]
-        x = prepare_uniform_interval((0, 1), step)
+    for i in range(0, 11):
+        func = list_sol_functions[i][0]
+        interval = list_sol_functions[i][1]
+        x = prepare_uniform_interval(interval, step)
         y = [func(i) for i in x]
-        table = np.array([x, y])
-        table = table.transpose()
-        np.savetxt(
-            f"./solution_tables/validation_data/{func.__name__}.csv",
-            table,
-            delimiter=",",
-        )
-
-    step = 0.001
-    for i in range(4, 6):
-        func = list_sol_functions[i]
-        x = prepare_uniform_interval((0.1, 1), step)
-        y = [func(i) for i in x]
-        table = np.array([x, y])
-        table = table.transpose()
-        np.savetxt(
-            f"./solution_tables/validation_data/{func.__name__}.csv",
-            table,
-            delimiter=",",
-        )
-
-    step = 0.001
-    for i in range(6, 7):
-        func = list_sol_functions[i]
-        x = prepare_uniform_interval((0, 1), step)
-        y = np.array([func(i) for i in x])
-        x = np.array([x]).T
-        table = np.hstack([x, y])
+        z = []
+        for j in range(len(x)):
+            if isinstance(y[j], tuple) or isinstance(y[j], list):
+                z.append([x[j]] + list(y[j]))
+            else:
+                z.append([x[j], y[j]])
+        table = np.array(z)
+        # table = table.transpose()
         np.savetxt(
             f"./solution_tables/validation_data/{func.__name__}.csv",
             table,

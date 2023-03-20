@@ -90,7 +90,7 @@ def ST_LF_ODE_1_solution(x):
 #     return 1/999 * np.power(np.e, -1000 * x) * (1000 * np.power(np.e, 999 * x) - 1)
 
 
-def ST_LH_ODE_2_table(points_array: list, interval: Tuple[float, float] = (0.1, 1)):
+def ST_LH_ODE_2_table(points_array: list, interval: Tuple[float, float] = (0, 1)):
     """solution function for stiff y'' + 1001y' + 1000y = 0, y(0) = 1, y'(0) = 0"""
     size = 2
     sode = "y1 y0(0)=1\n" "-1001*y1-1000*y0 y1(0)=0"

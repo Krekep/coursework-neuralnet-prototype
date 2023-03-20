@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Tuple, List
 
 
 def array1d_creator(elem_type: str):
@@ -164,8 +164,14 @@ def activation_to_cpp_template(
     if activation_name == "perceptron_threshold":
         d.update(
             {
-                "perceptron_threshold": lambda x: f"if ({x} >= {decorator_params[0]}) {x} = 1; else {x} = 0;\n"
+                "perceptron_threshold": lambda x: _fill_values(f"if ({x} >= threshold) {x} = 1; else {x} = 0;\n", decorator_params)
             }
         )
 
     return d[activation_name](name)
+
+
+def _fill_values(act_func: str, values: List[Tuple[str, float]]):
+    for key, value in values:
+        act_func = act_func.replace(key, str(value))
+    return act_func

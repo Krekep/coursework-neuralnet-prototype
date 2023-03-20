@@ -187,7 +187,7 @@ class IModel(object):
         input_size = self._input_size
         output_size = self._output_size
         blocks = self._shape
-        layers = config["layer"]
+        layers = config["layer"] + [config["classifier"]]
 
         comment = f"// This function takes {input_size} elements array and returns {output_size} elements array\n"
         signature = f""
@@ -266,7 +266,6 @@ class IModel(object):
             right_size = layer_dict[LAYER_DICT_NAMES["shape"]]
             act_func = layer_dict[LAYER_DICT_NAMES["activation"]]
             decorator_params = layer_dict.get(LAYER_DICT_NAMES["decorator_params"])
-            # TODO: fix activation functions with additional arguments
             feed_forward_cycles += cpp_utils.feed_forward_step(
                 f"layer_{i}",
                 left_size,

@@ -16,10 +16,10 @@ def load_tables(folder: str, table_name: str, input_size: int = 1):
 
 
 names = []
-for func in testlaunches.build_tables.list_sol_functions:
+for func, _ in testlaunches.build_tables.list_sol_functions:
     names.append(func.__name__)
 
-for func in testlaunches.build_tables.list_table_functions:
+for func, _ in testlaunches.build_tables.list_table_functions:
     names.append(func.__name__)
 
 

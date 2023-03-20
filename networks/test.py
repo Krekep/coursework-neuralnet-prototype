@@ -4,7 +4,7 @@ import numpy as np
 from scipy import stats
 
 from equations.system_ode import SystemODE
-
+from networks.imodel import IModel
 
 # act_func, weight_initializer1, bias_initializer = init_params(act_name='linear', weight_name='ones',
 #                                                               bias_name='zeros')
@@ -161,26 +161,30 @@ from equations.system_ode import SystemODE
 # e.solve((0, 1))
 # res = e.build_table([0])
 
-import trainer
+# import trainer
+#
+#
+# def f_x(x):
+#     return 2 * x
+#
+#
+# def f_x2(x):
+#     return x ** 2
+#
+#
+# def f_x_z(x, z):
+#     return 2 * x - z
+#
+#
+# x_data = np.array([[i / 10] for i in range(0, 101)])
+# f_x_data = np.array([f_x(x) for x in x_data])
+# networks = trainer.full_search(x_data, f_x_data)
+# for nn in networks:
+#     # print(nn)
+#     print(nn[0]["loss_func"], nn[0]["normalize"], nn[0]["epochs"], nn[0]["optimizer"], end='\n')
+#     print(nn[1], nn[2], str(nn[3]))
+#     print("***********")
 
+#nn = IModel.create_perceptron(1, 1, [])
+# nn.export_to_cpp("test")
 
-def f_x(x):
-    return 2 * x
-
-
-def f_x2(x):
-    return x ** 2
-
-
-def f_x_z(x, z):
-    return 2 * x - z
-
-
-x_data = np.array([[i / 10] for i in range(0, 101)])
-f_x_data = np.array([f_x(x) for x in x_data])
-networks = trainer.full_search(x_data, f_x_data)
-for nn in networks:
-    # print(nn)
-    print(nn[0]["loss_func"], nn[0]["normalize"], nn[0]["epochs"], nn[0]["optimizer"], end='\n')
-    print(nn[1], nn[2], str(nn[3]))
-    print("***********")
