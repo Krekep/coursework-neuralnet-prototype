@@ -203,16 +203,14 @@ class DenseNet(tf.keras.Model):
 
         self.classifier = layer_creator.from_dict(config["classifier"])
 
-    def get_config(self):
-        config = super(
-            DenseNet, self
-        ).get_config()  # get config of the base Layer class
+    @property
+    def get_activations(self) -> list:
+        """
+        Get list of activations functions for each layer
 
-        # config.update({'units': self.units,
-        #                'activation_func': tf.keras.activations.serialize(self.activation_func),
-        #                'weight': tf.keras.initializers.serialize(self.weight_initializer),
-        #                'biases': tf.keras.initializers.serialize(self.bias_initializer),
-        #                })
-        # you need to serialize the callable activation function
+        Returns
+        -------
+        activation: list
+        """
 
-        return config
+        return self.activation_func.copy()

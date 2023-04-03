@@ -184,7 +184,8 @@ fabric.properties
 # idea folder, uncomment if you don't need it
 .idea
 resource
-testlaunches/solution_tables
+testlaunches/solution_tables/data
+testlaunches/solution_tables/validation_data
 testlaunches/archive
 *.xlsx
 *.cpp

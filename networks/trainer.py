@@ -1,11 +1,13 @@
 """
 Module for training neural networks
 """
+import gc
 import random
 from typing import Union, Tuple, List
 
 import numpy as np
 import tensorflow as tf
+from memory_profiler import profile
 
 from networks import imodel, activations
 
@@ -97,17 +99,17 @@ def _normalize_two_array(
 
 def _normalize_array(x: np.ndarray) -> Tuple[np.ndarray, float]:
     m = abs(np.amax(x))
-    if m < 1:
-        m = 1
-    x = x / m
+    if m != 0:
+        x = x / m
     return x, m
 
 
+@profile
 def train(
         x_data: np.ndarray, y_data: np.ndarray, **kwargs
 ) -> Union[
     Tuple[imodel.IModel, tf.keras.callbacks.History],
-    Tuple[List[imodel.IModel], tf.keras.callbacks.History],
+    Tuple[List[imodel.IModel], List[tf.keras.callbacks.History]],
 ]:
     """
     Choose and return neural network which present the minimal average absolute deviation.
@@ -185,6 +187,9 @@ def train(
         if args["debug"]:
             print(f"Normalization coefficient is {norm_coff}")
 
+    x_data = tf.convert_to_tensor(x_data, dtype=float)
+    y_data = tf.convert_to_tensor(y_data, dtype=float)
+
     # prepare neural networks
     if args["debug"]:
         print("Prepare neural networks and data")
@@ -230,8 +235,7 @@ def train(
         if args["debug"]:
             print(nn)
             verb = 1
-        history.append(
-            nn.train(
+        temp_his = nn.train(
                 x_data,
                 y_data,
                 epochs=args["epochs"],
@@ -241,13 +245,29 @@ def train(
                 ),
                 verbose=verb,
             )
+        temp_last_res = dict()
+        for key in temp_his.history:
+            temp_last_res[key] = temp_his.history[key][-1]
+
+        del temp_his
+        nn.clear_history()
+        gc.collect()
+
+        history.append(
+            temp_last_res
         )
     result_net = nets[0]
     result_history = history[0]
-    min_err = history[0].history["loss"][-1]
+    # min_err = history[0].history["loss"][-1]
+    # for i in range(1, len(nets)):
+    #     if history[i].history["loss"][-1] < min_err:
+    #         min_err = history[i].history["loss"][-1]
+    #         result_net = nets[i]
+    #         result_history = history[i]
+    min_err = history[0]["loss"]
     for i in range(1, len(nets)):
-        if history[i].history["loss"][-1] < min_err:
-            min_err = history[i].history["loss"][-1]
+        if history[i]["loss"] < min_err:
+            min_err = history[i]["loss"]
             result_net = nets[i]
             result_history = history[i]
     if args["debug"]:
@@ -257,6 +277,7 @@ def train(
     return result_net, result_history
 
 
+@profile
 def full_search(
         x_data: np.ndarray, y_data: np.ndarray, **kwargs
 ) -> list[list[dict, float, float, imodel.IModel]]:
@@ -307,11 +328,11 @@ def full_search(
 
     # Full train iteration over data
     epochs_data = [50]
-    # epochs_data = [50, 200, 500, 1000]
+    # epochs_data = [50, 200, 500]
 
     # Learning step
-    # rates = [1e-2, 5e-3, 1e-3]
-    rates = [1e-2]
+    rates = [1e-2, 5e-3, 1e-3]
+    # rates = [1e-2]
 
     # Validation metrics
     validation_metrics = [
@@ -320,8 +341,8 @@ def full_search(
     ]
 
     # Loss function for training
-    losses_functions = losses.get_all_loss_functions()
-    # losses_functions = {"MeanSquaredError": losses.get_loss("MeanSquaredError")}
+    # losses_functions = losses.get_all_loss_functions()
+    losses_functions = {"MeanSquaredError": losses.get_loss("MeanSquaredError")}
 
     # Training metrics
     metrics = [
@@ -352,7 +373,10 @@ def full_search(
                             metaparams[-1].update(kwargs)
 
     best_nets: List[List[dict, float, float, imodel.IModel]] = []
+    print(len(metaparams))
+    print(len(nets_param))
     for i, params in enumerate(metaparams):
+        print(i)
         trained, history = train(x_data, y_data, **params)
         if kwargs.get("experiments"):
             best_nets.append([params, trained, history])
@@ -370,12 +394,10 @@ def full_search(
 
 def _load_network_shapes():
     return [
-        # [10, 10, 10],
+        [10, 10, 10],
         # [10, 10, 10, 10, 10, 10],
-        # [4, 8, 16, 32, 64],
-        # [4, 8, 16],
-        # [64, 32, 16, 8, 4],
-        # [16, 8, 4],
+        [4, 8, 16, 32],
+        [32, 16, 8, 4],
         # [100, 100, 100],
         [],
     ]

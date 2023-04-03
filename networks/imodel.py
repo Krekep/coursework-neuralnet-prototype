@@ -8,6 +8,7 @@ import keras.activations
 import keras.initializers
 import numpy as np
 import tensorflow as tf
+from memory_profiler import profile
 
 from networks import activations, cpp_utils
 from networks.config_format import LAYER_DICT_NAMES, HEADER_OF_FILE
@@ -173,6 +174,10 @@ class IModel(object):
         )
         return self._train_history
 
+    def clear_history(self):
+        del self._train_history
+        self._train_history = None
+
     def export_to_cpp(
         self, path: str, array_type: str = "[]", path_to_compiler: str = "g++", **kwargs
     ):
@@ -302,7 +307,7 @@ class IModel(object):
 #define {path[0].upper() + path[1:]}_hpp
 
 {comment}
-{signature}
+{signature};
 
 #endif /* {path[0].upper() + path[1:]}_hpp */
 
@@ -390,6 +395,18 @@ class IModel(object):
         """
 
         return self._output_size
+
+    @property
+    def get_activations(self) -> list:
+        """
+        Get list of activations for each layer
+
+        Returns
+        -------
+        activations: list
+        """
+
+        return self.network.get_activations
 
     def __str__(self) -> str:
         """

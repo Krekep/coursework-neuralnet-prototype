@@ -162,6 +162,7 @@ from networks.imodel import IModel
 # res = e.build_table([0])
 
 # import trainer
+# from networks import activations, losses
 #
 #
 # def f_x(x):
@@ -178,6 +179,59 @@ from networks.imodel import IModel
 #
 # x_data = np.array([[i / 10] for i in range(0, 101)])
 # f_x_data = np.array([f_x(x) for x in x_data])
+#
+# size = 4
+# shapes = [
+#     [],
+#     [10, 10],
+#     [1, 1, 1],
+#     [2]
+# ]
+#
+# acts = [
+#     [activations.get("linear")],
+#     [activations.get("perceptron_threshold")] * 2 + [activations.get("linear")],
+#     [activations.get("perceptron_threshold")] * 3 + [activations.get("linear")],
+#     [activations.get("perceptron_threshold")] * 1 + [activations.get("linear")],
+# ]
+# names = [
+#     ["a"],
+#     ["a"] * 3,
+#     ["a"] * 4,
+#     ["a"] * 2,
+# ]
+#
+# nets = []
+# input_len = 1
+# output_len = 1
+# losses_f = losses.get_all_loss_functions()
+#
+# for l in losses_f:
+#     for s, a, n in zip(shapes, acts, names):
+#         nets.append(
+#             IModel(
+#                 input_size=input_len,
+#                 block_size=s,
+#                 output_size=output_len,
+#                 activation_func=a,
+#                 activation_names=n,
+#             )
+#         )
+#
+# for i, l in enumerate(losses_f):
+#     for j in range(size):
+#         nn = nets[i * size + j]
+#         nn.compile(loss_func=losses_f[l])
+#
+# for nn in nets:
+#     his = nn.train(
+#         x_data,
+#         f_x_data,
+#         epochs=20,
+#         verbose=0,
+#     )
+#     print(his.history["loss"][-1])
+
 # networks = trainer.full_search(x_data, f_x_data)
 # for nn in networks:
 #     # print(nn)
@@ -185,6 +239,5 @@ from networks.imodel import IModel
 #     print(nn[1], nn[2], str(nn[3]))
 #     print("***********")
 
-#nn = IModel.create_perceptron(1, 1, [])
+# nn = IModel.create_perceptron(1, 1, [])
 # nn.export_to_cpp("test")
-
