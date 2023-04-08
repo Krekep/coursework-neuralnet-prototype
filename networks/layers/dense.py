@@ -60,12 +60,15 @@ class MyDense(keras.layers.Layer):
         super(MyDense, self).__init__(**kwargs)
         w_init = weight_initializer
         self.w = tf.Variable(
-            initial_value=w_init(shape=(input_dim, units), dtype="float32"), name=f"Var_w_{self.name}",
+            initial_value=w_init(shape=(input_dim, units), dtype="float32"),
+            name=f"Var_w_{self.name}",
             trainable=True,
         )
         b_init = bias_initializer
         self.b = tf.Variable(
-            initial_value=b_init(shape=(units,), dtype="float32"), name=f"Var_w_{self.name}", trainable=True
+            initial_value=b_init(shape=(units,), dtype="float32"),
+            name=f"Var_w_{self.name}",
+            trainable=True,
         )
 
         self.units = units
@@ -78,12 +81,12 @@ class MyDense(keras.layers.Layer):
         self.decorator_params: Optional[dict] = decorator_params
 
     def call(self, inputs, **kwargs):
-        f = tf.matmul(inputs, self.w)
-        s = f + self.b
         if self.decorator_params is None:
-            return self.activation_func(s)
+            return self.activation_func(tf.matmul(inputs, self.w) + self.b)
         else:
-            return self.activation_func(s, **self.decorator_params)
+            return self.activation_func(
+                tf.matmul(inputs, self.w) + self.b, **self.decorator_params
+            )
 
     def __str__(self):
         res = f"Layer {self.name}\n"
@@ -93,21 +96,6 @@ class MyDense(keras.layers.Layer):
             # res += f"biases = {self.b.numpy()}\n"
             res += f"activation = {self.activation_name}\n"
         return res
-
-    def get_config(self):
-        config = super(MyDense, self).get_config()  # get config of the base Layer class
-
-        config.update(
-            {
-                "units": self.units,
-                "activation_func": tf.keras.activations.serialize(self.activation_func),
-                "weight": tf.keras.initializers.serialize(self.weight_initializer),
-                "biases": tf.keras.initializers.serialize(self.bias_initializer),
-            }
-        )
-        # you need to serialise the callable activation function
-
-        return config
 
     def to_dict(self):
         w = self.w.value().numpy()

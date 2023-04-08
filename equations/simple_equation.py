@@ -45,7 +45,9 @@ def _build_table(
         )  # return variable back to axes and go to previous variable
         return solution_table  # return m arrays like [xn, xn-1, ..., x3, x2, x1, y]
     elif acc is not None:
-        temp = network.feedforward(acc.reshape((1, acc.shape[0])))  # get network answer for X vector
+        temp = network.feedforward(
+            acc.reshape((1, acc.shape[0]))
+        )  # get network answer for X vector
         res = temp.numpy().tolist()  # transform tf.Tensor to python list
         return res
 

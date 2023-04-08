@@ -111,8 +111,8 @@ def ST_S_ODE_3_table(points_array: list, interval: Tuple[float, float] = (0, 40)
         """ODEs for Robertson's chemical reaction system."""
         x, y, z = y
         xdot = -0.04 * x + 1.0e4 * y * z
-        ydot = 0.04 * x - 1.0e4 * y * z - 3.0e7 * y ** 2
-        zdot = 3.0e7 * y ** 2
+        ydot = 0.04 * x - 1.0e4 * y * z - 3.0e7 * y**2
+        zdot = 3.0e7 * y**2
         return xdot, ydot, zdot
 
     # Initial and final times.

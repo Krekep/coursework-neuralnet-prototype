@@ -1,6 +1,8 @@
 from typing import List, Optional, Dict
 
 import tensorflow as tf
+from keras.utils.tf_utils import ListWrapper
+from memory_profiler import profile
 from tensorflow import keras
 
 from networks import layer_creator
@@ -102,6 +104,7 @@ class DenseNet(tf.keras.Model):
         self.input_size = input_size
         self.block_size = block_size
         self.output_size = output_size
+        self.trained_time = {"train_time": 0.0, "epoch_time": [], "evaluate_time": 0}
 
     def call(self, inputs, **kwargs):
         x = inputs
@@ -157,8 +160,6 @@ class DenseNet(tf.keras.Model):
             "input_size": self.input_size,
             "block_size": self.block_size,
             "output_size": self.output_size,
-            # "activation_func": activations.serialize(self.activation_func),       # Layers have own activation param
-            # "out_activation": activations.serialize(self.out_activation),         # Layers have own activation param
             "layer": [],
             "classifier": self.classifier.to_dict(),
         }
@@ -204,7 +205,7 @@ class DenseNet(tf.keras.Model):
         self.classifier = layer_creator.from_dict(config["classifier"])
 
     @property
-    def get_activations(self) -> list:
+    def get_activations(self) -> List:
         """
         Get list of activations functions for each layer
 
@@ -212,5 +213,4 @@ class DenseNet(tf.keras.Model):
         -------
         activation: list
         """
-
         return self.activation_func.copy()

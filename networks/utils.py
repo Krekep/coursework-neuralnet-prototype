@@ -64,7 +64,7 @@ def import_csv_table(path: str) -> np.ndarray:
     table: np.ndarray
         Parsing result
     """
-    table = np.genfromtxt(path, delimiter=',')
+    table = np.genfromtxt(path, delimiter=",")
     return table
 
 
@@ -85,7 +85,9 @@ def export_csv_table(table: np.ndarray, path: str) -> None:
     np.savetxt(path, table, delimiter=",")
 
 
-def split_table_by_ans(table: np.ndarray, len_answers=1) -> Tuple[np.ndarray, np.ndarray]:
+def split_table_by_ans(
+    table: np.ndarray, len_answers=1
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Splitting the original table into tables of variables and answers by length of answer.
 

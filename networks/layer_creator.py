@@ -35,14 +35,16 @@ def _check_dimension(x) -> tuple:
     return False, None
 
 
-def create(inp_size,
-           shape,
-           activation=activations.get("linear"),
-           weight=keras.initializers.get("ones"),
-           bias=keras.initializers.get("zeros"),
-           layer_type="Dense",
-           is_debug=False,
-           **kwargs):
+def create(
+    inp_size,
+    shape,
+    activation=activations.get("linear"),
+    weight=keras.initializers.get("ones"),
+    bias=keras.initializers.get("zeros"),
+    layer_type="Dense",
+    is_debug=False,
+    **kwargs
+):
     layer = _create_functions[layer_type](
         inp_size, shape, activation, weight, bias, is_debug=is_debug, **kwargs
     )
@@ -50,12 +52,12 @@ def create(inp_size,
 
 
 def create_dense(
-        inp_size,
-        shape,
-        activation=keras.activations.linear,
-        weight=keras.initializers.get("ones"),
-        bias=keras.initializers.get("zeros"),
-        **kwargs
+    inp_size,
+    shape,
+    activation=keras.activations.linear,
+    weight=keras.initializers.get("ones"),
+    bias=keras.initializers.get("zeros"),
+    **kwargs
 ):
     layer = create(
         inp_size, shape, activation, weight, bias, layer_type="Dense", **kwargs

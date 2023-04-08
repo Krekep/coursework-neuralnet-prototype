@@ -4,7 +4,9 @@ import numpy as np
 from scipy import stats
 
 from equations.system_ode import SystemODE
+from networks.config_format import HEADER_OF_FILE
 from networks.imodel import IModel
+import tensorflow as tf
 
 # act_func, weight_initializer1, bias_initializer = init_params(act_name='linear', weight_name='ones',
 #                                                               bias_name='zeros')
@@ -81,31 +83,31 @@ from networks.imodel import IModel
 #
 # print("FIRST")
 # for i, layer in enumerate(nn.network.blocks):
-#     x = layer.layer(x)
-#     print(layer.layer.w.numpy(), layer.layer.b.numpy())
+#     x = layer(x)
+#     print(layer.w.numpy(), layer.b.numpy())
 #     print(f"Layer {i}", x)
 #
 # print(
-#     nn.network.classifier.layer.w.numpy(),
-#     nn.network.classifier.layer.b.numpy(),
-#     nn.network.classifier.layer.activation_func.__name__,
+#     nn.network.classifier.w.numpy(),
+#     nn.network.classifier.b.numpy(),
+#     nn.network.classifier.activation_func.__name__,
 # )
-# x = nn.network.classifier.layer(x)
+# x = nn.network.classifier(x)
 # print(f"Classifier", x)
 # print()
 #
 # print("SECOND")
 # for i, layer in enumerate(nn_loaded.network.blocks):
-#     x1 = layer.layer(x1)
-#     print(layer.layer.w.numpy(), layer.layer.b.numpy())
+#     x1 = layer(x1)
+#     print(layer.w.numpy(), layer.b.numpy())
 #     print(f"Layer {i}", x1)
 #
 # print(
-#     nn_loaded.network.classifier.layer.w.numpy(),
-#     nn_loaded.network.classifier.layer.b.numpy(),
-#     nn_loaded.network.classifier.layer.activation_func.__name__,
+#     nn_loaded.network.classifier.w.numpy(),
+#     nn_loaded.network.classifier.b.numpy(),
+#     nn_loaded.network.classifier.activation_func.__name__,
 # )
-# x1 = nn_loaded.network.classifier.layer(x1)
+# x1 = nn_loaded.network.classifier(x1)
 # print(f"Classifier", x1)
 #
 # def S_ODE_2_table(points_array: list, interval: Tuple[float, float] = (0, np.pi)):
@@ -239,5 +241,15 @@ from networks.imodel import IModel
 #     print(nn[1], nn[2], str(nn[3]))
 #     print("***********")
 
-# nn = IModel.create_perceptron(1, 1, [])
-# nn.export_to_cpp("test")
+nn = IModel.create_neuron(2, 2, [2])
+nn.export_to_cpp("test")
+nn.export_to_file("test_desc")
+
+inp = np.array([[5, 5]], dtype=float)
+print(nn.feedforward(inp))
+
+acts = nn.get_activations
+acts_name = []
+for i in range(len(acts)):
+    acts_name.append(acts[i].__name__)
+print(acts_name)

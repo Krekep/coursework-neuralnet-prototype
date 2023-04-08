@@ -8,6 +8,7 @@ import keras.activations
 import keras.initializers
 import numpy as np
 import tensorflow as tf
+from keras.utils.tf_utils import ListWrapper
 from memory_profiler import profile
 
 from networks import activations, cpp_utils
@@ -95,6 +96,7 @@ class IModel(object):
         optimizer=tf.keras.optimizers.SGD,
         loss_func=tf.keras.losses.MeanSquaredError(),
         metrics=None,
+        run_eagerly=False,
     ):
         if metrics is None:
             metrics = [
@@ -107,7 +109,7 @@ class IModel(object):
             optimizer=optimizer(learning_rate=rate),
             loss=loss_func,
             metrics=metrics,
-            run_eagerly=False,
+            run_eagerly=run_eagerly,
         )
 
     def feedforward(self, inputs: np.ndarray) -> tf.Tensor:
@@ -131,9 +133,10 @@ class IModel(object):
         x_data: np.ndarray,
         y_data: np.ndarray,
         validation_split=0.0,
+        validation_data=None,
         epochs=50,
         mini_batch_size=None,
-        callbacks=None,
+        callbacks: List = None,
         verbose="auto",
     ) -> keras.callbacks.History:
         """
@@ -161,22 +164,88 @@ class IModel(object):
         history: tf.keras.callbacks.History
             History of training
         """
-        if not self._is_debug:
-            callbacks = []
+        if self._is_debug:
+            if callbacks is not None:
+                callbacks.append(
+                    tf.keras.callbacks.CSVLogger(
+                        f"log_{self.get_name}.csv", separator=",", append=False
+                    )
+                )
+            else:
+                callbacks = [
+                    tf.keras.callbacks.CSVLogger(
+                        f"log_{self.get_name}.csv", separator=",", append=False
+                    )
+                ]
         self._train_history = self.network.fit(
             x_data,
             y_data,
             batch_size=mini_batch_size,
             callbacks=callbacks,
             validation_split=validation_split,
+            validation_data=validation_data,
             epochs=epochs,
             verbose=verbose,
         )
         return self._train_history
 
+    def evaluate(
+        self,
+        x_data: np.ndarray,
+        y_data: np.ndarray,
+        batch_size=None,
+        callbacks: List = None,
+        verbose="auto",
+        **kwargs,
+    ) -> keras.callbacks.History:
+        """
+        Train network on passed dataset and return training history
+
+        Parameters
+        ----------
+        x_data: np.ndarray
+            Array of input vectors
+        y_data: np.ndarray
+            Array of output vectors
+        batch_size: int
+            Size of batches
+        callbacks: list
+            List of tensorflow callbacks for fit function
+        verbose: int
+            Output accompanying training
+
+        Returns
+        -------
+        history: tf.keras.callbacks.History
+            History of training
+        """
+        if self._is_debug:
+            if callbacks is not None:
+                callbacks.append(
+                    tf.keras.callbacks.CSVLogger(
+                        f"log_{self.get_name}.csv", separator=",", append=False
+                    )
+                )
+            else:
+                callbacks = [
+                    tf.keras.callbacks.CSVLogger(
+                        f"log_{self.get_name}.csv", separator=",", append=False
+                    )
+                ]
+        self._evaluate_history = self.network.evaluate(
+            x_data,
+            y_data,
+            batch_size=batch_size,
+            callbacks=callbacks,
+            verbose=verbose,
+            **kwargs,
+        )
+        return self._evaluate_history
+
     def clear_history(self):
+        del self.network.history
         del self._train_history
-        self._train_history = None
+        del self._evaluate_history
 
     def export_to_cpp(
         self, path: str, array_type: str = "[]", path_to_compiler: str = "g++", **kwargs
@@ -327,14 +396,17 @@ class IModel(object):
     def export_to_file(self, path, **kwargs):
         config = self.to_dict(**kwargs)
         with open(path + ".apg", "w") as f:
-            f.write(HEADER_OF_FILE + json.dumps(config))
+            f.write(HEADER_OF_FILE + json.dumps(config, indent=2))
 
     def from_file(self, path, **kwargs):
         with open(path + ".apg", "r") as f:
             for header in range(HEADER_OF_FILE.count("\n")):
                 # TODO: check version compability
                 _ = f.readline()
-            config = json.loads(f.readline())
+            config_str = ""
+            for line in f:
+                config_str += line
+            config = json.loads(config_str)
             self.network.from_dict(config)
             self.set_name(config["name"])
 

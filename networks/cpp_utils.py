@@ -164,7 +164,9 @@ def activation_to_cpp_template(
     if activation_name == "perceptron_threshold":
         d.update(
             {
-                "perceptron_threshold": lambda x: _fill_values(f"if ({x} >= threshold) {x} = 1; else {x} = 0;\n", decorator_params)
+                "perceptron_threshold": lambda x: _fill_values(
+                    f"if ({x} >= threshold) {x} = 1; else {x} = 0;\n", decorator_params
+                )
             }
         )
 

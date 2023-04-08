@@ -9,19 +9,19 @@ def perceptron_threshold(x, threshold: float = 1.0):
 
 _activation_name = {
     # "perceptron_threshold": perceptron_threshold,
-    # "elu": tf.keras.activations.elu,
-    # "relu": tf.keras.activations.relu,
-    # "gelu": tf.keras.activations.gelu,
-    # "selu": tf.keras.activations.selu,
-    # "exponential": tf.keras.activations.exponential,
+    "elu": tf.keras.activations.elu,
+    "relu": tf.keras.activations.relu,
+    "gelu": tf.keras.activations.gelu,
+    "selu": tf.keras.activations.selu,
+    "exponential": tf.keras.activations.exponential,
     "linear": tf.keras.activations.linear,
     "sigmoid": tf.keras.activations.sigmoid,
-    # "hard_sigmoid": tf.keras.activations.hard_sigmoid,
-    # "swish": tf.keras.activations.swish,
-    # "tanh": tf.keras.activations.tanh,
-    # "softplus": tf.keras.activations.softplus,
-    # 'softmax': tf.keras.activations.softmax,
-    # "softsign": tf.keras.activations.softsign,
+    "hard_sigmoid": tf.keras.activations.hard_sigmoid,
+    "swish": tf.keras.activations.swish,
+    "tanh": tf.keras.activations.tanh,
+    "softplus": tf.keras.activations.softplus,
+    "softmax": tf.keras.activations.softmax,
+    "softsign": tf.keras.activations.softsign,
 }
 
 

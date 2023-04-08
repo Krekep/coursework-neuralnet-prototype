@@ -74,9 +74,7 @@ if __name__ == "__main__":
         interval = list_table_functions[i][1]
         x = prepare_uniform_interval(interval, step)
         table = func(x)
-        np.savetxt(
-            f"./solution_tables/data/{func.__name__}.csv", table, delimiter=","
-        )
+        np.savetxt(f"./solution_tables/data/{func.__name__}.csv", table, delimiter=",")
 
     step = 0.05
     for i in range(0, 11):
@@ -92,9 +90,7 @@ if __name__ == "__main__":
                 z.append([x[j], y[j]])
         table = np.array(z)
         # table = table.transpose()
-        np.savetxt(
-            f"./solution_tables/data/{func.__name__}.csv", table, delimiter=","
-        )
+        np.savetxt(f"./solution_tables/data/{func.__name__}.csv", table, delimiter=",")
 
     # build validation data
     step = 0.001
