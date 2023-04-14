@@ -104,7 +104,7 @@ class DenseNet(tf.keras.Model):
         self.input_size = input_size
         self.block_size = block_size
         self.output_size = output_size
-        self.trained_time = {"train_time": 0.0, "epoch_time": [], "evaluate_time": 0}
+        self.trained_time = {"train_time": 0.0, "epoch_time": [], "predict_time": 0}
 
     def call(self, inputs, **kwargs):
         x = inputs

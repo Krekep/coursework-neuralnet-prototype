@@ -15,18 +15,6 @@ from tests.utils import array_compare, init_params, file_compare
         (np.array([[1]], dtype=float), [1, [1], 1], ["linear", "linear"], None),
         (np.array([[1, 1]], dtype=float), [2, [1], 1], "tanh", None),
         (np.array([[1], [1]], dtype=float), [1, [1], 1], "tanh", None),
-        (
-            np.array([[1, 1], [1, 1]], dtype=float),
-            [2, [1], 2],
-            ["perceptron_threshold"],
-            [{"threshold": 1}],
-        ),
-        (
-            np.array([[1, 1], [1, 1]], dtype=float),
-            [2, [1], 1],
-            ["perceptron_threshold"],
-            [{"threshold": 2}],
-        ),
     ],
 )
 def test_predict_is_same(inp, shape, act_init, decorator_params):

@@ -21,35 +21,48 @@ class MeasureTrainTime(Callback):
         self.start_evaluate_time = 0
         self.end_evaluate_time = 0
 
+        self.start_predict_time = 0
+        self.end_predict_time = 0
+
         self.start_epoch_time = 0
         self.end_epoch_time = 0
 
     def on_test_begin(self, logs=None):
-        self.model.trained_time["evaluate_time"] = 0
-        self.start_evaluate_time = time.time()
+        self.model.trained_time["predict_time"] = 0
+        self.start_evaluate_time = time.perf_counter()
 
     def on_test_end(self, logs=None):
-        self.end_evaluate_time = time.time()
-        self.model.trained_time["evaluate_time"] = (
+        self.end_evaluate_time = time.perf_counter()
+        self.model.trained_time["predict_time"] = (
             self.end_evaluate_time - self.start_evaluate_time
+        )
+
+    def on_predict_begin(self, logs=None):
+        self.model.trained_time["predict_time"] = 0
+        self.start_predict_time = time.perf_counter()
+
+    def on_predict_end(self, logs=None):
+        self.end_predict_time = time.perf_counter()
+        self.model.trained_time["predict_time"] = (
+            self.end_predict_time - self.start_predict_time
         )
 
     def on_train_begin(self, logs=None):
         self.model.trained_time["train_time"] = 0.0
         self.model.trained_time["epoch_time"] = []
-        self.start_train_time = time.time()
+        self.start_train_time = time.perf_counter()
 
     def on_epoch_begin(self, epoch, logs=None):
-        self.start_epoch_time = time.time()
+        self.start_epoch_time = time.perf_counter()
 
     def on_epoch_end(self, epoch, logs=None):
-        self.end_epoch_time = time.time()
+        self.end_epoch_time = time.perf_counter()
         self.model.trained_time["epoch_time"].append(
             self.end_epoch_time - self.start_epoch_time
         )
 
     def on_train_end(self, logs=None):
-        self.end_train_time = time.time()
+        self.end_train_time = time.perf_counter()
         self.model.trained_time["train_time"] = (
             self.end_train_time - self.start_train_time
         )

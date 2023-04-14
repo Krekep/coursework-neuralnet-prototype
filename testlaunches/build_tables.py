@@ -1,8 +1,7 @@
 import numpy as np
 from scipy import stats
 from testlaunches.functions import *
-from typing import Union, List, Tuple
-
+from typing import Union, List, Tuple, Callable
 
 rng = np.random.default_rng()
 
@@ -66,6 +65,19 @@ list_table_functions = [
     (ST_LH_ODE_2_table, (0, 1)),
     (ST_S_ODE_3_table, (0, 40)),
 ]
+
+
+def func_to_tables(
+    funcs: dict[str, tuple[Callable, tuple[float, float]]], step=0.05, val_step=0.001
+):
+    for name, v in funcs:
+        func = v[0]
+        interval = v[1]
+        for folder, s in zip(["data", "validation_data"], [step, val_step]):
+            x = prepare_uniform_interval(interval, s)
+            table = func(x)
+            np.savetxt(f"./solution_tables/{folder}/{name}.csv", table, delimiter=",")
+
 
 if __name__ == "__main__":
     step = 0.05

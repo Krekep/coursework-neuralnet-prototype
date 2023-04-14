@@ -3,11 +3,12 @@ Module for training neural networks
 """
 import gc
 import random
+import time
 from typing import Union, Tuple, List, Dict, Any
 
-import keras.backend
 import numpy as np
 import tensorflow as tf
+import keras.backend as k
 from memory_profiler import profile
 
 from networks import imodel, activations
@@ -15,7 +16,6 @@ from networks import imodel, activations
 from networks import losses
 from networks.callbacks import MemoryCleaner, MeasureTrainTime, LightHistory
 from networks.losses import get_loss, get_metric
-
 
 _default_shapes = [
     [10, 10, 10, 10, 10, 10],
@@ -257,9 +257,7 @@ def train(
 # @profile
 def experiments_train(
     x_data: np.ndarray, y_data: np.ndarray, val_data=None, **kwargs
-) -> tuple[
-    dict[str, list], list[dict[Union[str, Any], Any]], list[dict[Union[str, Any], Any]]
-]:
+) -> tuple[dict[str, list], list[dict[str, float]], list[dict[str, float]]]:
     """
     Choose and return neural network which present the minimal average absolute deviation.
     x_data and y_data is numpy 2d arrays (in case we don't have multiple-layer input/output).
@@ -381,7 +379,8 @@ def experiments_train(
     history = []
     val_history = []
     nets_param = {"shape": [], "activations": []}
-    for i, nn in enumerate(nets):
+    for _, nn in enumerate(nets):
+        time_viewer = MeasureTrainTime()
         verb = 0
         if args["debug"]:
             print(nn)
@@ -391,7 +390,7 @@ def experiments_train(
             y_data,
             epochs=args["epochs"],
             validation_split=args["validation_split"],
-            callbacks=[LightHistory(), MeasureTrainTime()],
+            callbacks=[LightHistory(), time_viewer],
             verbose=verb,
         )
         temp_his_last_res = dict()
@@ -402,20 +401,37 @@ def experiments_train(
         history.append(temp_his_last_res)
 
         if val_data is not None:
+            val_max_size = 40_000
+            predict_max_size = 100
+            size = val_data[0].shape
+
+            val_x = np.concatenate([val_data[0]] * (val_max_size // size[0]))
+            val_y = np.concatenate([val_data[1]] * (val_max_size // size[0]))
+
+            predict_x = np.split(val_data[0][0:predict_max_size], predict_max_size)
+            predict_y = np.split(val_data[1][0:predict_max_size], predict_max_size)
+
             validation_history = nn.evaluate(
-                val_data[0],
-                val_data[1],
-                callbacks=[MemoryCleaner(), MeasureTrainTime()],
+                val_x,
+                val_y,
+                callbacks=[MemoryCleaner(), time_viewer],
                 verbose=verb,
                 return_dict=True,
             )
             temp_val_last_res = dict()
             for key in validation_history:
                 temp_val_last_res["predict_" + key] = validation_history[key]
-            temp_val_last_res["evaluate_time"] = nn.network.trained_time[
-                "evaluate_time"
+            temp_val_last_res["predict_all_time"] = nn.network.trained_time[
+                "predict_time"
             ]
 
+            temp_val_last_res["predict_single_time"] = 0
+
+            for row in predict_x:
+                nn.network.predict(x=row, verbose=verb, callbacks=[time_viewer])
+                temp_val_last_res["predict_single_time"] += nn.network.trained_time[
+                    "predict_time"
+                ]
             val_history.append(temp_val_last_res)
 
         nets_param["shape"].append(
@@ -426,6 +442,9 @@ def experiments_train(
         for i in range(len(acts)):
             acts_name.append(acts[i].__name__)
         nets_param["activations"].append(str(acts_name))
+
+        gc.collect()
+        k.clear_session()
 
     return nets_param, history, val_history
 

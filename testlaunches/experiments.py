@@ -1,7 +1,3 @@
-import datetime
-import gc
-import time
-
 import keras.backend
 import numpy as np
 import pandas as pd
@@ -13,7 +9,9 @@ from memory_profiler import profile
 
 
 def load_tables(folder: str, table_name: str, input_size: int = 1):
-    table = utils.import_csv_table(f"./solution_tables/{folder}/{table_name}.csv")
+    table = utils.import_csv_table(
+        f"./testlaunches/solution_tables/{folder}/{table_name}.csv"
+    )
     table = utils.shuffle_table(table)
     return utils.split_table_by_inp(table, input_size)
 
@@ -29,14 +27,16 @@ def prepare_tables(
     return data
 
 
-# @profile
 def do_experiments(
     names: list[str],
     data: dict[str, tuple[np.ndarray, np.ndarray]],
     val_data: dict[str, tuple[np.ndarray, np.ndarray]],
     **kwargs,
 ):
-    for fun_num, func_name in enumerate(names):
+    for fun_num in range(len(names) - 1, -1, -1):
+        func_name = names[fun_num]
+        print(func_name)
+
         x, y = data[func_name]
         x_val, y_val = val_data[func_name]
         train_results = full_search(x, y, x_val, y_val, experiments=True, **kwargs)
@@ -97,12 +97,12 @@ def do_experiments(
         nn_params.pop("validation_metrics")
 
         # df = pd.DataFrame(data=nn_params)
-        # df = df.drop(columns=["nets_param", "metrics", "validation_metrics"])
         # print(df)
-        print(func_name)
         keras.backend.clear_session()
         with open(
-            f"./solution_tables/train_result/{func_name}.csv", "w", newline=""
+            f"./testlaunches/solution_tables/train_result/{func_name}.csv",
+            "w",
+            newline="",
         ) as outfile:
             writer = csv.writer(outfile)
             writer.writerow(nn_params.keys())
