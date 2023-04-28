@@ -11,7 +11,7 @@ weight_initializer2 = init_params(weight_name="zeros")[0]
 prec_act = activations.perceptron_threshold
 
 # layer = ILayer(inp_size=1, shape=1, activation=act_func, weight=weight_initializer1, bias=bias_initializer)
-# layer1 = MyDense(input_dim=3, units=1, activation_func=act_func, weight_initializer=weight_initializer1, bias_initializer=bias_initializer)
+# layer1 = MyDense(input_dim=3, units=1, activation_funcs=act_func, weight_initializer=weight_initializer1, bias_initializer=bias_initializer)
 #
 # print(layer.get_config())
 # print(layer.get_weights())

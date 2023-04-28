@@ -3,6 +3,8 @@ from scipy import stats
 from testlaunches.functions import *
 from typing import Union, List, Tuple, Callable
 
+__all__ = ["func_to_tables"]
+
 rng = np.random.default_rng()
 
 

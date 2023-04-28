@@ -86,19 +86,19 @@ class DenseNet(tf.keras.Model):
         else:
             block_size = [input_size]
 
-        self.classifier = layer_creator.create_dense(
+        self.out_layer = layer_creator.create_dense(
             block_size[-1],
             output_size,
             activation=activation_func[-1],
             weight=weight,
             bias=biases,
             is_debug=is_debug,
-            name=f"ClassifierLayerMyDense",
+            name=f"OutLayerMyDense",
             activation_names=activation_names[-1],
             decorator_params=decorator_params[-1],
         )
 
-        self.activation_func = activation_func
+        self.activation_funcs = activation_func
         self.weight_initializer = weight
         self.bias_initializer = biases
         self.input_size = input_size
@@ -110,7 +110,7 @@ class DenseNet(tf.keras.Model):
         x = inputs
         for layer in self.blocks:
             x = layer(x, **kwargs)
-        return self.classifier(x, **kwargs)
+        return self.out_layer(x, **kwargs)
 
     def train_step(self, data):
         """
@@ -150,7 +150,7 @@ class DenseNet(tf.keras.Model):
         res = f"IModel {self.name}\n"
         for layer in self.blocks:
             res += str(layer)
-        res += str(self.classifier)
+        res += str(self.out_layer)
         return res
 
     def to_dict(self, **kwargs):
@@ -161,7 +161,7 @@ class DenseNet(tf.keras.Model):
             "block_size": self.block_size,
             "output_size": self.output_size,
             "layer": [],
-            "classifier": self.classifier.to_dict(),
+            "out_layer": self.out_layer.to_dict(),
         }
 
         for i, layer in enumerate(self.blocks):
@@ -202,7 +202,7 @@ class DenseNet(tf.keras.Model):
         for layer_num in range(len(self.blocks)):
             self.blocks[layer_num] = layers[layer_num]
 
-        self.classifier = layer_creator.from_dict(config["classifier"])
+        self.out_layer = layer_creator.from_dict(config["out_layer"])
 
     @property
     def get_activations(self) -> List:
@@ -213,4 +213,4 @@ class DenseNet(tf.keras.Model):
         -------
         activation: list
         """
-        return self.activation_func.copy()
+        return self.activation_funcs.copy()

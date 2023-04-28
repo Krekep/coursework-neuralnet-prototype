@@ -15,7 +15,8 @@ from networks import imodel, activations
 
 from networks import losses
 from networks.callbacks import MemoryCleaner, MeasureTrainTime, LightHistory
-from networks.losses import get_loss, get_metric
+from networks.losses import get_loss
+from networks.metrics import get_metric
 
 _default_shapes = [
     [10, 10, 10, 10, 10, 10],

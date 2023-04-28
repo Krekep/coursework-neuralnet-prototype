@@ -14,7 +14,7 @@ import tensorflow as tf
 # prec_act = activations.perceptron_threshold
 #
 # layer = ILayer(inp_size=1, shape=1, activation=act_func, weight=weight_initializer1, bias=bias_initializer)
-# layer1 = MyDense(input_dim=3, units=1, activation_func=act_func, weight_initializer=weight_initializer1, bias_initializer=bias_initializer)
+# layer1 = MyDense(input_dim=3, units=1, activation_funcs=act_func, weight_initializer=weight_initializer1, bias_initializer=bias_initializer)
 #
 # print(layer.get_config())
 # print(layer.get_weights())
@@ -88,11 +88,11 @@ import tensorflow as tf
 #     print(f"Layer {i}", x)
 #
 # print(
-#     nn.network.classifier.w.numpy(),
-#     nn.network.classifier.b.numpy(),
-#     nn.network.classifier.activation_func.__name__,
+#     nn.network.out_layer.w.numpy(),
+#     nn.network.out_layer.b.numpy(),
+#     nn.network.out_layer.activation_funcs.__name__,
 # )
-# x = nn.network.classifier(x)
+# x = nn.network.out_layer(x)
 # print(f"Classifier", x)
 # print()
 #
@@ -103,11 +103,11 @@ import tensorflow as tf
 #     print(f"Layer {i}", x1)
 #
 # print(
-#     nn_loaded.network.classifier.w.numpy(),
-#     nn_loaded.network.classifier.b.numpy(),
-#     nn_loaded.network.classifier.activation_func.__name__,
+#     nn_loaded.network.out_layer.w.numpy(),
+#     nn_loaded.network.out_layer.b.numpy(),
+#     nn_loaded.network.out_layer.activation_funcs.__name__,
 # )
-# x1 = nn_loaded.network.classifier(x1)
+# x1 = nn_loaded.network.out_layer(x1)
 # print(f"Classifier", x1)
 #
 # def S_ODE_2_table(points_array: list, interval: Tuple[float, float] = (0, np.pi)):
@@ -215,7 +215,7 @@ import tensorflow as tf
 #                 input_size=input_len,
 #                 block_size=s,
 #                 output_size=output_len,
-#                 activation_func=a,
+#                 activation_funcs=a,
 #                 activation_names=n,
 #             )
 #         )

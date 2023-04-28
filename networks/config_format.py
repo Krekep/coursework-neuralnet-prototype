@@ -12,8 +12,10 @@ LAYER_DICT_NAMES = {
     "decorator_params": "decorator_params",
 }
 
-HEADER_OF_FILE = """
+VERSION = 0.2
+
+HEADER_OF_FILE = f"""
 Package: GANN
-version: 0.2
+version: {VERSION}
 Author: Alimov Pavel Gennadievich
 """

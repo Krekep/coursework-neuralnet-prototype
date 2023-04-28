@@ -78,14 +78,13 @@ class IModel(object):
             **kwargs,
         )
 
-        # self.network = DenseNet(input_size, block_size, activation_func=activation_func,
+        # self.network = DenseNet(input_size, block_size, activation_funcs=activation_funcs,
         #                         out_activation=out_activation,
         #                         weight=weight_init, biases=bias_init, output_size=output_size,
         #                         is_debug=is_debug, **kwargs)
         self._input_size = input_size
         self._output_size = output_size
         self._shape = block_size
-        self._train_history = None
         self._name = name
         self._is_debug = is_debug
         self.set_name(name)
@@ -177,7 +176,7 @@ class IModel(object):
                         f"log_{self.get_name}.csv", separator=",", append=False
                     )
                 ]
-        self._train_history = self.network.fit(
+        temp = self.network.fit(
             x_data,
             y_data,
             batch_size=mini_batch_size,
@@ -187,7 +186,7 @@ class IModel(object):
             epochs=epochs,
             verbose=verbose,
         )
-        return self._train_history
+        return temp
 
     def evaluate(
         self,
@@ -261,7 +260,7 @@ class IModel(object):
         input_size = self._input_size
         output_size = self._output_size
         blocks = self._shape
-        layers = config["layer"] + [config["classifier"]]
+        layers = config["layer"] + [config["out_layer"]]
 
         comment = f"// This function takes {input_size} elements array and returns {output_size} elements array\n"
         signature = f""

@@ -25,19 +25,6 @@ _activation_name = {
 }
 
 
-def serialize(func: Callable):
-    # name = _activation_serialize.get(func.__name__)
-    return func.__name__
-
-
-def deserialize(name: str, is_decorator: bool = False, **kwargs):
-    res = _activation_name[name]
-    if is_decorator:
-        res = res(**kwargs)
-
-    return res
-
-
 def get(name: str):
     return _activation_name[name]
 
