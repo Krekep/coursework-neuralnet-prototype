@@ -2,7 +2,6 @@ from typing import List, Optional, Dict
 
 import tensorflow as tf
 from keras.utils.tf_utils import ListWrapper
-from memory_profiler import profile
 from tensorflow import keras
 
 from networks import layer_creator, optimizers, losses, metrics

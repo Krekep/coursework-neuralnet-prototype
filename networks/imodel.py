@@ -9,7 +9,6 @@ import keras.initializers
 import numpy as np
 import tensorflow as tf
 from keras.utils.tf_utils import ListWrapper
-from memory_profiler import profile
 
 from networks import activations, cpp_utils
 from networks.config_format import LAYER_DICT_NAMES, HEADER_OF_FILE
