@@ -16,7 +16,8 @@ from networks import imodel, activations
 from networks import losses
 from networks.callbacks import MemoryCleaner, MeasureTrainTime, LightHistory
 from networks.losses import get_loss
-from networks.metrics import get_metric
+from networks.metrics import get_metric, get_all_metric_functions
+from networks.optimizers import get_all_optimizers
 
 _default_shapes = [
     [10, 10, 10, 10, 10, 10],
@@ -29,23 +30,16 @@ _default_shapes = [
 
 
 def _create_random_network(
-    inp: int,
-    out: int,
     min_layers=1,
     max_layers=5,
     min_neurons=3,
     max_neurons=60,
-    args=None,
 ) -> list[Union[list[int], list, list[Union[str, Any]], list[None]]]:
     """
     Create random neural network from the passed parameters.
 
     Parameters
     ----------
-    inp: int
-        Amount of input variables
-    out: int
-        Amount of output variables
     min_layers: int
         Minimal count of layers in neural net
     max_layers: int
@@ -63,20 +57,17 @@ def _create_random_network(
     layers = random.randint(min_layers, max_layers)
     shape = [random.randint(min_neurons, max_neurons) for _ in range(layers)]
     act = []
-    act_names = []
     decorator_param = []
     all_act_names = list(activations.get_all_activations().keys())
     for _ in shape:
-        act_names.append(random.choice(all_act_names))
-        act.append(activations.get(act_names[-1]))
+        act.append(random.choice(all_act_names))
         # TODO: activation func can take additional arguments
         # but at this moment I dont create random arguments (instead of *None* in decorator_params)
         decorator_param.append(None)
-    act_names.append("linear")
-    act.append(activations.get("linear"))
+    act.append("linear")
     decorator_param.append(None)
 
-    nets_param = [shape, act, act_names, decorator_param]
+    nets_param = [shape, act, decorator_param]
     return nets_param
 
 
@@ -92,13 +83,25 @@ def _normalize_two_array(
 
 
 def _normalize_array(x: np.ndarray) -> Tuple[np.ndarray, float]:
+    """
+    Scale array from [a, b] to [0, 1]
+
+    Parameters
+    ----------
+    x: np.ndarray
+        Array for scaling
+
+    Returns
+    -------
+    x: Tuple[np.ndarray, float]
+        Scaled array and scale coefficient
+    """
     m = abs(np.amax(x))
     if m != 0:
         x = x / m
     return x, m
 
 
-# @profile
 def train(
     x_data: np.ndarray, y_data: np.ndarray, **kwargs
 ) -> tuple[imodel.IModel, dict[Union[str, Any], Any]]:
@@ -145,9 +148,8 @@ def train(
         "nets_param": [
             [
                 shape,  # shape
-                [activations.get("sigmoid")] * len(shape)
-                + [activations.get("linear")],  # activation functions
-                ["sigmoid"] * len(shape) + ["linear"],  # activation names
+                ["sigmoid"] * len(shape)
+                + ["linear"],  # activation functions
                 [None] * (len(shape) + 1),  # decorator parameters for activation
             ]
             for shape in _default_shapes
@@ -186,17 +188,15 @@ def train(
         print("Prepare neural networks and data")
     nets = []
     for parameters in args["nets_param"]:
-        shape = parameters[0]
+        shape: list[int] = parameters[0]
         act = parameters[1]
-        act_names = parameters[2]
-        decorator_param = parameters[3]
+        decorator_param = parameters[2]
         str_shape = "_".join(map(str, shape))
         curr_net = imodel.IModel(
             input_size=input_len,
             block_size=shape,
             output_size=output_len,
             activation_func=act,
-            activation_names=act_names,
             decorator_params=decorator_param,
             net_type=args["net_type"],
             name=f"net{args['name_salt']}_{str_shape}",
@@ -204,7 +204,16 @@ def train(
         )
         nets.append(curr_net)
     if args["use_rand_net"]:
-        rand_net = _create_random_network(input_len, output_len, args=args)
+        rand_net_params = _create_random_network(input_len, output_len)
+        rand_net = imodel.IModel(
+            input_size=input_len,
+            block_size=rand_net_params[0],
+            output_size=output_len,
+            activation_func=rand_net_params[1],
+            decorator_params=rand_net_params[2],
+            net_type=args["net_type"],
+            name=f"net{args['name_salt']}_random",
+        )
         nets.append(rand_net)
 
     # compile
@@ -232,14 +241,12 @@ def train(
             y_data,
             epochs=args["epochs"],
             validation_split=args["validation_split"],
-            callbacks=[MemoryCleaner(), MeasureTrainTime()],
+            callbacks=[MemoryCleaner()],
             verbose=verb,
         )
         temp_last_res = dict()
         for key in temp_his.history:
             temp_last_res[key] = temp_his.history[key].copy()
-        temp_last_res["train_time"] = nn.network.trained_time["train_time"]
-        temp_last_res["epoch_time"] = nn.network.trained_time["epoch_time"].copy()
 
         history.append(temp_last_res)
     result_net = nets[0]
@@ -255,7 +262,6 @@ def train(
     return result_net, result_history
 
 
-# @profile
 def experiments_train(
     x_data: np.ndarray, y_data: np.ndarray, val_data=None, **kwargs
 ) -> tuple[dict[str, list], list[dict[str, float]], list[dict[str, float]]]:
@@ -282,21 +288,21 @@ def experiments_train(
     args = {
         "debug": False,
         "eps": 1e-2,
-        "epochs": 100,
+        "epochs": 50,
         "validation_split": 0.2,
         "normalize": False,
         "name_salt": "",
-        "loss_func": get_loss("MeanSquaredError"),
-        "optimizer": tf.keras.optimizers.SGD,
+        "loss_func": "MeanSquaredError",
+        "optimizer": ["SGD"],
         "metrics": [
-            get_metric("MeanSquaredError"),
-            get_metric("MeanAbsoluteError"),
-            get_metric("CosineSimilarity"),
+            "MeanSquaredError",
+            "MeanAbsoluteError",
+            "CosineSimilarity",
         ],
         "validation_metrics": [
-            get_metric("MeanSquaredError"),
-            get_metric("MeanAbsoluteError"),
-            get_metric("CosineSimilarity"),
+            "MeanSquaredError",
+            "MeanAbsoluteError",
+            "CosineSimilarity",
         ],
         "use_rand_net": True,
         "experiments": True,
@@ -304,9 +310,8 @@ def experiments_train(
         "nets_param": [
             [
                 shape,  # shape
-                [activations.get("sigmoid")] * len(shape)
-                + [activations.get("linear")],  # activation functions
-                ["sigmoid"] * len(shape) + ["linear"],  # activation names
+                ["sigmoid"] * len(shape)
+                + ["linear"],  # activation functions
                 [None] * (len(shape) + 1),  # decorator parameters for activation
             ]
             for shape in _default_shapes
@@ -338,29 +343,26 @@ def experiments_train(
     for parameters in args["nets_param"]:
         shape = parameters[0]
         act = parameters[1]
-        act_names = parameters[2]
-        decorator_param = parameters[3]
+        decorator_param = parameters[2]
         str_shape = "_".join(map(str, shape))
         curr_net = imodel.IModel(
             input_size=input_len,
             block_size=shape,
             output_size=output_len,
             activation_func=act,
-            activation_names=act_names,
             decorator_params=decorator_param,
             net_type=args["net_type"],
             name=f"net{args['name_salt']}_{str_shape}",
         )
         nets.append(curr_net)
     if args["use_rand_net"]:
-        rand_net_params = _create_random_network(input_len, output_len, args=args)
+        rand_net_params = _create_random_network(input_len, output_len)
         rand_net = imodel.IModel(
             input_size=input_len,
             block_size=rand_net_params[0],
             output_size=output_len,
             activation_func=rand_net_params[1],
-            activation_names=rand_net_params[2],
-            decorator_params=rand_net_params[3],
+            decorator_params=rand_net_params[2],
             net_type=args["net_type"],
             name=f"net{args['name_salt']}_random",
         )
@@ -402,12 +404,12 @@ def experiments_train(
         history.append(temp_his_last_res)
 
         if val_data is not None:
-            val_max_size = 40_000
-            predict_max_size = 100
+            val_max_size = 20_000
+            predict_max_size = 1_000
             size = val_data[0].shape
 
-            val_x = np.concatenate([val_data[0]] * (val_max_size // size[0]))
-            val_y = np.concatenate([val_data[1]] * (val_max_size // size[0]))
+            val_x = np.concatenate([val_data[0]] * max(1, (val_max_size // size[0])))
+            val_y = np.concatenate([val_data[1]] * max(1, (val_max_size // size[0])))
 
             predict_x = np.split(val_data[0][0:predict_max_size], predict_max_size)
             predict_y = np.split(val_data[1][0:predict_max_size], predict_max_size)
@@ -428,11 +430,11 @@ def experiments_train(
 
             temp_val_last_res["predict_single_time"] = 0
 
+            start_time = time.perf_counter()
             for row in predict_x:
-                nn.network.predict(x=row, verbose=verb, callbacks=[time_viewer])
-                temp_val_last_res["predict_single_time"] += nn.network.trained_time[
-                    "predict_time"
-                ]
+                nn.feedforward(row)
+            end_time = time.perf_counter()
+            temp_val_last_res["predict_single_time"] = end_time - start_time
             val_history.append(temp_val_last_res)
 
         nets_param["shape"].append(
@@ -441,7 +443,7 @@ def experiments_train(
         acts = nn.get_activations
         acts_name = []
         for i in range(len(acts)):
-            acts_name.append(acts[i].__name__)
+            acts_name.append(acts[i])
         nets_param["activations"].append(str(acts_name))
 
         gc.collect()
@@ -464,6 +466,10 @@ def full_search(
         Array of inputs --- [input1, input2, ...]
     y_data: np.ndarray
         List of outputs --- [output1, output2, ...]
+    x_val: np.ndarray
+        Array of inputs for validate train
+    y_val: np.ndarray
+        Array of outputs for validate train
     Returns
     -------
     net: network.INetwork
@@ -472,31 +478,32 @@ def full_search(
 
     # default config
     args = {
-        "rates": [1e-2, 5e-3, 1e-3],
+        # "rates": [1e-2, 5e-3, 1e-3],
         # "epochs_data": [50, 200],
-        # "split_sizes": [0.2],
         # "normalize_data": [False, True],
-        "losses_functions": losses.get_all_loss_functions(),
-        "optimizers": [
-            tf.keras.optimizers.SGD,
-            tf.keras.optimizers.Adam,
-            tf.keras.optimizers.RMSprop,
-        ],
+        # "losses_functions": [
+        #             key
+        #             for key in losses.get_all_loss_functions()
+        #         ],
+        # "optimizers": [
+        #     key
+        #     for key in get_all_optimizers()
+        # ],
         "metrics": [
-            losses.get_all_metric_functions()[key]
-            for key in losses.get_all_metric_functions()
+            key
+            for key in get_all_metric_functions()
         ],
         "validation_metrics": [
-            losses.get_all_metric_functions()[key]
-            for key in losses.get_all_metric_functions()
+            key
+            for key in get_all_metric_functions()
         ],
         "nets_shape": _default_shapes,
-        # "rates": [1e-2],
-        "epochs_data": [50],
         "validation_split": [0.2],
+        "rates": [1e-2],
+        "epochs_data": [10],
         "normalize_data": [False],
-        # "losses_functions": {"mse": tf.keras.losses.MeanSquaredError()},
-        # "optimizers": [tf.keras.optimizers.SGD],
+        "losses_functions": ["MeanSquaredError"],
+        "optimizers": ["Adam"],
     }
 
     for arg in args:
@@ -509,8 +516,8 @@ def full_search(
         val_data = (x_val, y_val)
 
     # Networks parameters --- shape and activation functions
-
     activation_funcs = activations.get_all_activations()
+    activation_funcs = ["swish"]
     nets_param = []
     for shape in args["nets_shape"]:
         if len(shape) != 0:
@@ -518,8 +525,6 @@ def full_search(
                 nets_param.append(
                     [
                         shape,
-                        [activations.get(activation)] * len(shape)
-                        + [activations.get("linear")],
                         [activation] * len(shape) + ["linear"],
                         [None] * (len(shape) + 1),
                     ]
@@ -528,7 +533,6 @@ def full_search(
             nets_param.append(
                 [
                     shape,
-                    [activations.get("linear")],
                     ["linear"],
                     [None],
                 ]
@@ -542,9 +546,7 @@ def full_search(
                     for epochs in args["epochs_data"]:
                         for rate in args["rates"]:
                             metaparams.append(dict())
-                            metaparams[-1]["loss_func"] = args["losses_functions"][
-                                loss_func
-                            ]
+                            metaparams[-1]["loss_func"] = loss_func
                             metaparams[-1]["normalize"] = normalize
                             metaparams[-1]["optimizer"] = optimizer
                             metaparams[-1]["validation_split"] = validation_split
@@ -558,10 +560,10 @@ def full_search(
                             metaparams[-1].update(kwargs)
 
     best_nets: List[List[dict, float, float, imodel.IModel]] = []
-    print(len(metaparams))
-    print(len(nets_param))
+    # print(len(metaparams))
+    # print(len(nets_param))
     for i, params in enumerate(metaparams):
-        print(i)
+        # print(i)
         if kwargs.get("experiments"):
             temp_train_results = experiments_train(
                 x_data, y_data, val_data=val_data, **params
@@ -583,7 +585,14 @@ def full_search(
     return best_nets
 
 
-def _load_network_shapes():
+def _load_network_shapes() -> list[list[int]]:
+    """
+    Get default shapes for neural networks (without input and output sizes)
+
+    Returns
+    -------
+    shapes: list[list[int]]
+    """
     return [
         [10, 10, 10],
         [10, 10, 10, 10, 10, 10],

@@ -23,16 +23,8 @@ def array_compare(a, b, eps=-6):
     return fl
 
 
-def init_params(act_name: str = None, weight_name: str = None, bias_name: str = None):
+def init_params(weight_name: str = None, bias_name: str = None):
     return_param = []
-    if act_name is not None:
-        if isinstance(act_name, list):
-            act_func = []
-            for name in act_name:
-                act_func.append(networks.activations.get(name))
-        else:
-            act_func = networks.activations.get(act_name)
-        return_param.append(act_func)
     if weight_name is not None:
         weight_initializer = keras.initializers.get(weight_name)
         return_param.append(weight_initializer)

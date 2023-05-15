@@ -38,13 +38,34 @@ def _check_dimension(x) -> tuple:
 def create(
     inp_size,
     shape,
-    activation=activations.get("linear"),
+    activation="linear",
     weight=keras.initializers.get("ones"),
     bias=keras.initializers.get("zeros"),
     layer_type="Dense",
     is_debug=False,
     **kwargs
-):
+) -> object:
+    """
+    Create layer by parameters
+    Parameters
+    ----------
+    inp_size: int
+        layer input size
+    shape: int
+        amount of neurons in layer
+    activation: str
+        activation function for neurons
+    weight
+    bias
+    layer_type: str
+        type of layer for create
+    is_debug: bool
+    kwargs
+
+    Returns
+    -------
+
+    """
     layer = _create_functions[layer_type](
         inp_size, shape, activation, weight, bias, is_debug=is_debug, **kwargs
     )
@@ -54,11 +75,29 @@ def create(
 def create_dense(
     inp_size,
     shape,
-    activation=keras.activations.linear,
+    activation="linear",
     weight=keras.initializers.get("ones"),
     bias=keras.initializers.get("zeros"),
     **kwargs
 ):
+    """
+    Create dense layer by parameters
+    Parameters
+    ----------
+    inp_size: int
+        layer input size
+    shape: int
+        amount of neurons in layer
+    activation: str
+        activation function for neurons
+    weight
+    bias
+    kwargs
+
+    Returns
+    -------
+
+    """
     layer = create(
         inp_size, shape, activation, weight, bias, layer_type="Dense", **kwargs
     )
@@ -66,6 +105,16 @@ def create_dense(
 
 
 def from_dict(config):
+    """
+    Restore layer from dictionary of parameters
+    Parameters
+    ----------
+    config: dict
+
+    Returns
+    -------
+
+    """
     res = create(
         inp_size=config["inp_size"],
         shape=config["shape"],

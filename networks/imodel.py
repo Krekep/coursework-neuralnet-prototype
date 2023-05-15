@@ -59,7 +59,7 @@ class IModel(object):
         input_size: int,
         block_size: List[int],
         output_size: int,
-        activation_func=keras.activations.sigmoid,
+        activation_func="sigmoid",
         weight_init=tf.random_normal_initializer(),
         bias_init=tf.random_normal_initializer(),
         name="net",
@@ -77,11 +77,6 @@ class IModel(object):
             is_debug=is_debug,
             **kwargs,
         )
-
-        # self.network = DenseNet(input_size, block_size, activation_funcs=activation_funcs,
-        #                         out_activation=out_activation,
-        #                         weight=weight_init, biases=bias_init, output_size=output_size,
-        #                         is_debug=is_debug, **kwargs)
         self._input_size = input_size
         self._output_size = output_size
         self._shape = block_size
@@ -92,40 +87,80 @@ class IModel(object):
     def compile(
         self,
         rate=1e-2,
-        optimizer=tf.keras.optimizers.SGD,
-        loss_func=tf.keras.losses.MeanSquaredError(),
+        optimizer="SGD",
+        loss_func="MeanSquaredError",
         metrics=None,
         run_eagerly=False,
-    ):
+    ) -> None:
+        """
+        Configures the model for training
+
+        Parameters
+        ----------
+        rate: float
+            learning rate for optimizer
+        optimizer: str
+            name of optimizer
+        loss_func: str
+            name of loss function
+        metrics: list[str]
+            list with metric function names
+        run_eagerly: bool
+
+        Returns
+        -------
+
+        """
         if metrics is None:
             metrics = [
-                tf.keras.metrics.MeanSquaredError(),
-                tf.keras.metrics.MeanAbsoluteError(),
-                tf.keras.metrics.MeanSquaredLogarithmicError(),
+                "MeanSquaredError",
+                "MeanAbsoluteError",
+                "MeanSquaredLogarithmicError",
             ]
 
-        self.network.compile(
-            optimizer=optimizer(learning_rate=rate),
-            loss=loss_func,
-            metrics=metrics,
+        self.network.custom_compile(
+            optimizer=optimizer,
+            rate=rate,
+            loss_func=loss_func,
+            metric_funcs=metrics,
             run_eagerly=run_eagerly,
         )
 
     def feedforward(self, inputs: np.ndarray) -> tf.Tensor:
         """
-        Return network answer for passed input
+        Return network answer for passed input by network __call__()
 
         Parameters
         ----------
         inputs: np.ndarray
             Input activation vector
+
         Returns
         -------
         outputs: tf.Tensor
             Network answer
         """
 
-        return self.network(inputs)
+        return self.network(inputs, training=False)
+
+    def predict(self, inputs: np.ndarray, callbacks: List = None) -> np.ndarray:
+        """
+        Return network answer for passed input by network predict()
+
+        Parameters
+        ----------
+        inputs: np.ndarray
+            Input activation vector
+        callbacks: list
+            List of tensorflow callbacks for predict function
+
+        Returns
+        -------
+        outputs: np.ndarray
+            Network answer
+        """
+
+        return self.network.predict(inputs, verbose=0, callbacks=callbacks)
 
     def train(
         self,
@@ -198,7 +233,7 @@ class IModel(object):
         **kwargs,
     ) -> keras.callbacks.History:
         """
-        Train network on passed dataset and return training history
+        Evaluate network on passed dataset and return evaluate history
 
         Parameters
         ----------
@@ -209,14 +244,14 @@ class IModel(object):
         batch_size: int
             Size of batches
         callbacks: list
-            List of tensorflow callbacks for fit function
+            List of tensorflow callbacks for evaluate function
         verbose: int
-            Output accompanying training
+            Output accompanying evaualing
 
         Returns
         -------
         history: tf.keras.callbacks.History
-            History of training
+            History of evaluating
         """
         if self._is_debug:
             if callbacks is not None:
@@ -243,12 +278,28 @@ class IModel(object):
 
     def clear_history(self):
         del self.network.history
-        del self._train_history
         del self._evaluate_history
 
     def export_to_cpp(
         self, path: str, array_type: str = "[]", path_to_compiler: str = "g++", **kwargs
-    ):
+    ) -> None:
+        """
+        Export neural network as feedforward function on c++
+
+        Parameters
+        ----------
+        path: str
+            path to file with name, without extension
+        array_type: str
+            c-style or cpp-style ("[]" or "vector")
+        path_to_compiler: str
+            path to c/c++ compiler
+        kwargs
+
+        Returns
+        -------
+
+        """
         res = """
         #include <cmath>
         #include <vector>
@@ -260,6 +311,7 @@ class IModel(object):
         input_size = self._input_size
         output_size = self._output_size
         blocks = self._shape
+        reverse = False
         layers = config["layer"] + [config["out_layer"]]
 
         comment = f"// This function takes {input_size} elements array and returns {output_size} elements array\n"
@@ -270,11 +322,11 @@ class IModel(object):
         transform_output_array = ""
         return_stat = "return answer;\n"
 
-        creator_1d: Callable[[str, int], str] = cpp_utils.array1d_creator("float")
+        creator_1d: Callable[[str, int, Optional[list]], str] = cpp_utils.array1d_creator("float")
         creator_heap_1d: Callable[[str, int], str] = cpp_utils.array1d_heap_creator(
             "float"
         )
-        creator_2d: Callable[[str, int, int], str] = cpp_utils.array2d_creator("float")
+        creator_2d: Callable[[str, int, int, Optional[list]], str] = cpp_utils.array2d_creator("float")
         if array_type == "[]":
             signature = f"float* feedforward(float x_array[])\n"
 
@@ -306,31 +358,19 @@ class IModel(object):
                 f"weight_{i}_{i + 1}",
                 layer_dict[LAYER_DICT_NAMES["inp_size"]],
                 layer_dict[LAYER_DICT_NAMES["shape"]],
+                layer_dict[LAYER_DICT_NAMES["weights"]],
+                reverse=reverse
             )
 
         fill_weights = ""
-        for i, layer_dict in enumerate(layers):
-            fill_weights += cpp_utils.fill_2d_array_by_list(
-                f"weight_{i}_{i + 1}", layer_dict[LAYER_DICT_NAMES["weights"]]
-            )
 
         create_biases = ""
         for i, layer_dict in enumerate(layers):
             create_biases += creator_1d(
-                f"bias_{i + 1}", layer_dict[LAYER_DICT_NAMES["shape"]]
+                f"bias_{i + 1}", layer_dict[LAYER_DICT_NAMES["shape"]], layer_dict[LAYER_DICT_NAMES["bias"]]
             )
 
         fill_biases = ""
-        for i, layer_dict in enumerate(layers):
-            fill_biases += cpp_utils.fill_1d_array_by_list(
-                f"bias_{i + 1}", layer_dict[LAYER_DICT_NAMES["bias"]]
-            )
-            # fill_biases += cpp_utils.fill_1d_array_by_list_short("float",
-            #                                                      layer_dict[LAYER_DICT_NAMES["shape"]],
-            #                                                      f"bias_{i + 1}",
-            #                                                      f"temp_{i + 1}",
-            #                                                      layer_dict[LAYER_DICT_NAMES["bias"]])
-
         feed_forward_cycles = ""
         for i, layer_dict in enumerate(layers):
             left_size = layer_dict[
@@ -373,6 +413,7 @@ class IModel(object):
         header_res = f"""
 #ifndef {path[0].upper() + path[1:]}_hpp
 #define {path[0].upper() + path[1:]}_hpp
+#include "{path}.cpp"
 
 {comment}
 {signature};
@@ -390,14 +431,51 @@ class IModel(object):
         os.system(path_to_compiler + " -c -Ofast " + path + ".cpp")
 
     def to_dict(self, **kwargs):
+        """
+        Export neural network to dictionary
+
+        Parameters
+        ----------
+        kwargs
+
+        Returns
+        -------
+
+        """
         return self.network.to_dict(**kwargs)
 
     def export_to_file(self, path, **kwargs):
+        """
+        Export neural network as parameters to file
+
+        Parameters
+        ----------
+        path:
+            path to file with name, without extension
+        kwargs
+
+        Returns
+        -------
+
+        """
         config = self.to_dict(**kwargs)
         with open(path + ".apg", "w") as f:
             f.write(HEADER_OF_FILE + json.dumps(config, indent=2))
 
     def from_file(self, path, **kwargs):
+        """
+        Import neural network as parameters from file
+
+        Parameters
+        ----------
+        path:
+            path to file with name, without extension
+        kwargs
+
+        Returns
+        -------
+
+        """
         with open(path + ".apg", "r") as f:
             for header in range(HEADER_OF_FILE.count("\n")):
                 # TODO: check version compability
@@ -491,10 +569,26 @@ class IModel(object):
         return str(self.network)
 
     @classmethod
-    def create_neuron(cls, input_size, output_size, shape, **kwargs):
+    def create_neuron(cls, input_size: int, output_size: int, shape: list[int], **kwargs):
+        """
+        Create neural network with passed size and sigmoid activation
+
+        Parameters
+        ----------
+        input_size: int
+        output_size: int
+        shape: list[int]
+            Sizes of hidden layers
+        kwargs
+
+        Returns
+        -------
+        net: imodel.IModel
+            Neural network
+        """
         activation, decorator_params, weight, biases, kwargs = _get_act_and_init(
             kwargs,
-            keras.activations.sigmoid,
+            "sigmoid",
             None,
             tf.random_normal_initializer(),
         )
@@ -512,27 +606,28 @@ class IModel(object):
 
         return res
 
-    @classmethod
-    def create_perceptron(cls, input_size, output_size, shape, threshold=1, **kwargs):
-        activation, decorator_params, weight, biases, kwargs = _get_act_and_init(
-            kwargs,
-            activations.perceptron_threshold,
-            [{"threshold": threshold}],
-            tf.random_normal_initializer(),
-        )
-
-        res = cls(
-            input_size=input_size,
-            block_size=shape,
-            output_size=output_size,
-            activation_func=activation,
-            bias_init=biases,
-            weight_init=weight,
-            decorator_params=decorator_params,
-            **kwargs,
-        )
-
-        return res
+    # perceptron activation is discrete and has no derivatives (gradient)
+    # @classmethod
+    # def create_perceptron(cls, input_size, output_size, shape, threshold=1, **kwargs):
+    #     activation, decorator_params, weight, biases, kwargs = _get_act_and_init(
+    #         kwargs,
+    #         activations.perceptron_threshold,
+    #         [{"threshold": threshold}],
+    #         tf.random_normal_initializer(),
+    #     )
+    #
+    #     res = cls(
+    #         input_size=input_size,
+    #         block_size=shape,
+    #         output_size=output_size,
+    #         activation_func=activation,
+    #         bias_init=biases,
+    #         weight_init=weight,
+    #         decorator_params=decorator_params,
+    #         **kwargs,
+    #     )
+    #
+    #     return res
 
 
 _create_functions = defaultdict(lambda: DenseNet)

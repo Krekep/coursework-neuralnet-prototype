@@ -5,30 +5,23 @@ from keras.utils.tf_utils import ListWrapper
 from memory_profiler import profile
 from tensorflow import keras
 
-from networks import layer_creator
+from networks import layer_creator, optimizers, losses, metrics
 from networks.layers.dense import MyDense
 
 
 class DenseNet(tf.keras.Model):
     def __init__(
-        self,
-        input_size: int = 2,
-        block_size: list = None,
-        output_size: int = 10,
-        activation_func=tf.keras.activations.linear,
-        weight=keras.initializers.get("ones"),
-        biases=keras.initializers.get("zeros"),
-        is_debug: bool = False,
-        **kwargs,
+            self,
+            input_size: int = 2,
+            block_size: list = None,
+            output_size: int = 10,
+            activation_func: str = "linear",
+            weight=keras.initializers.get("ones"),
+            biases=keras.initializers.get("zeros"),
+            is_debug: bool = False,
+            **kwargs,
     ):
-        activation_names = None
         decorator_params: List[Optional[Dict]] = [None]
-        if "activation_names" in kwargs.keys():
-            activation_names = kwargs.get("activation_names")
-            kwargs.pop("activation_names")
-        else:
-            activation_names = [activation_func.__name__] * (len(block_size) + 1)
-
         if "decorator_params" in kwargs.keys():
             decorator_params = kwargs.get("decorator_params")
             kwargs.pop("decorator_params")
@@ -36,17 +29,17 @@ class DenseNet(tf.keras.Model):
             decorator_params = [None]
 
         if (
-            isinstance(decorator_params, list)
-            and len(decorator_params) == 1
-            and decorator_params[0] is None
-            or decorator_params is None
+                isinstance(decorator_params, list)
+                and len(decorator_params) == 1
+                and decorator_params[0] is None
+                or decorator_params is None
         ):
             decorator_params = [None] * (len(block_size) + 1)
 
         if (
-            isinstance(decorator_params, list)
-            and len(decorator_params) == 1
-            and decorator_params[0] is not None
+                isinstance(decorator_params, list)
+                and len(decorator_params) == 1
+                and decorator_params[0] is not None
         ):
             decorator_params = decorator_params * (len(block_size) + 1)
 
@@ -65,7 +58,6 @@ class DenseNet(tf.keras.Model):
                     bias=biases,
                     is_debug=is_debug,
                     name=f"MyDense0",
-                    activation_names=activation_names[0],
                     decorator_params=decorator_params[0],
                 )
             )
@@ -79,7 +71,6 @@ class DenseNet(tf.keras.Model):
                         bias=biases,
                         is_debug=is_debug,
                         name=f"MyDense{i}",
-                        activation_names=activation_names[i],
                         decorator_params=decorator_params[i],
                     )
                 )
@@ -94,7 +85,6 @@ class DenseNet(tf.keras.Model):
             bias=biases,
             is_debug=is_debug,
             name=f"OutLayerMyDense",
-            activation_names=activation_names[-1],
             decorator_params=decorator_params[-1],
         )
 
@@ -106,7 +96,55 @@ class DenseNet(tf.keras.Model):
         self.output_size = output_size
         self.trained_time = {"train_time": 0.0, "epoch_time": [], "predict_time": 0}
 
+    def custom_compile(
+            self,
+            rate=1e-2,
+            optimizer="SGD",
+            loss_func="MeanSquaredError",
+            metric_funcs=None,
+            run_eagerly=False,
+    ):
+        """
+        Configures the model for training
+
+        Parameters
+        ----------
+        rate: float
+            learning rate for optimizer
+        optimizer: str
+            name of optimizer
+        loss_func: str
+            name of loss function
+        metric_funcs: list[str]
+            list with metric function names
+        run_eagerly: bool
+
+        Returns
+        -------
+
+        """
+        opt = optimizers.get_optimizer(optimizer)
+        loss = losses.get_loss(loss_func)
+        m = [metrics.get_metric(metric) for metric in metric_funcs]
+        self.compile(
+            optimizer=opt(learning_rate=rate),
+            loss=loss,
+            metrics=m,
+            run_eagerly=run_eagerly
+        )
+
     def call(self, inputs, **kwargs):
+        """
+        Obtaining a neural network response on the input data vector
+        Parameters
+        ----------
+        inputs
+        kwargs
+
+        Returns
+        -------
+
+        """
         x = inputs
         for layer in self.blocks:
             x = layer(x, **kwargs)
@@ -154,6 +192,17 @@ class DenseNet(tf.keras.Model):
         return res
 
     def to_dict(self, **kwargs):
+        """
+        Export neural network to dictionary
+
+        Parameters
+        ----------
+        kwargs
+
+        Returns
+        -------
+
+        """
         res = {
             "net_type": "MyDense",
             "name": self._name,
@@ -171,13 +220,27 @@ class DenseNet(tf.keras.Model):
 
     @classmethod
     def from_layers(
-        cls,
-        input_size: int,
-        block_size: List[int],
-        output_size: int,
-        layers: List[MyDense],
-        **kwargs,
+            cls,
+            input_size: int,
+            block_size: List[int],
+            output_size: int,
+            layers: List[MyDense],
+            **kwargs,
     ):
+        """
+        Restore neural network from list of layers
+        Parameters
+        ----------
+        input_size
+        block_size
+        output_size
+        layers
+        kwargs
+
+        Returns
+        -------
+
+        """
         res = cls(
             input_size=input_size,
             block_size=block_size,
@@ -191,6 +254,17 @@ class DenseNet(tf.keras.Model):
         return res
 
     def from_dict(self, config, **kwargs):
+        """
+        Restore neural network from dictionary of params
+        Parameters
+        ----------
+        config
+        kwargs
+
+        Returns
+        -------
+
+        """
         input_size = config["input_size"]
         block_size = config["block_size"]
         output_size = config["output_size"]

@@ -20,10 +20,10 @@ from tests.utils import array_compare, init_params
     ],
 )
 def test_create_layer(inp, shape, activation, biases, expected):
-    act_func, bias_initializer = init_params(act_name=activation, bias_name=biases)
+    bias_initializer = init_params(bias_name=biases)
     try:
         _ = layer_creator.create_dense(
-            inp_size=inp, shape=shape, activation=act_func, bias=bias_initializer
+            inp_size=inp, shape=shape, activation=activation, bias=bias_initializer
         )
         assert expected
     except:
@@ -146,14 +146,14 @@ def test_dense_call(inp, shape, w_init, b_init, expected):
     ],
 )
 def test_layer_call(inp, shape, act_init, w_init, b_init, expected):
-    act_func, weight_initializer, bias_initializer = init_params(
-        act_name=act_init, weight_name=w_init, bias_name=b_init
+    weight_initializer, bias_initializer = init_params(
+        weight_name=w_init, bias_name=b_init
     )
 
     layer = layer_creator.create_dense(
         inp_size=shape[0],
         shape=shape[1],
-        activation=act_func,
+        activation=act_init,
         weight=weight_initializer,
         bias=bias_initializer,
     )

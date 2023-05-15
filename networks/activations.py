@@ -1,6 +1,7 @@
 from typing import Callable
 
 import tensorflow as tf
+import keras
 
 
 def perceptron_threshold(x, threshold: float = 1.0):
@@ -25,9 +26,30 @@ _activation_name = {
 }
 
 
-def get(name: str):
+def get(name: str) -> Callable:
+    """
+    Get activation function by name
+    Parameters
+    ----------
+    name: str
+        name of activation function
+    Returns
+    -------
+    func: Callable
+        activation function
+    """
     return _activation_name[name]
 
 
-def get_all_activations() -> dict:
+def get_all_activations() -> dict[str, Callable]:
+    """
+    Get all activation functions
+    Parameters
+    ----------
+
+    Returns
+    -------
+    func: dict[str, Callable]
+        dictionary of activation functions
+    """
     return _activation_name

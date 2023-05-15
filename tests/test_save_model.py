@@ -18,14 +18,11 @@ from tests.utils import array_compare, init_params, file_compare
     ],
 )
 def test_predict_is_same(inp, shape, act_init, decorator_params):
-    act_func = tests.utils.init_params(act_name=act_init)
-    act_names = [act_init] if not isinstance(act_init, list) else act_init
     nn = IModel(
         shape[0],
         shape[1],
         shape[2],
-        activation_func=act_func,
-        activation_names=act_names,
+        activation_func=act_init,
         decorator_params=decorator_params,
     )
 

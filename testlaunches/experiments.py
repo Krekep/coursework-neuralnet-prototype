@@ -1,6 +1,5 @@
 import keras.backend
 import numpy as np
-import pandas as pd
 
 from networks.trainer import full_search
 from networks import utils
@@ -10,7 +9,7 @@ from memory_profiler import profile
 
 def load_tables(folder: str, table_name: str, input_size: int = 1):
     table = utils.import_csv_table(
-        f"./testlaunches/solution_tables/{folder}/{table_name}.csv"
+        f"./solution_tables/{folder}/{table_name}.csv"
     )
     table = utils.shuffle_table(table)
     return utils.split_table_by_inp(table, input_size)
@@ -33,7 +32,7 @@ def do_experiments(
     val_data: dict[str, tuple[np.ndarray, np.ndarray]],
     **kwargs,
 ):
-    for fun_num in range(len(names) - 1, -1, -1):
+    for fun_num in range(len(names)):
         func_name = names[fun_num]
         print(func_name)
 
@@ -63,17 +62,17 @@ def do_experiments(
 
             for key in train_params[0]:
                 val = train_params[0][key]
-                if key in ["loss_func", "optimizer", "metrics", "validation_metrics"]:
-                    if key in ["metrics", "validation_metrics"]:
-                        for i in range(len(val)):
-                            val[i] = type(val[i]).__name__
-                    elif key in ["optimizer"]:
-                        # TODO: Why "type()" for optimizer return "type"?
-                        val = str(val)
-                        dot_idx = val.rfind(".") + 1
-                        val = val[dot_idx:-2]
-                    else:
-                        val = type(val).__name__
+                # if key in ["loss_func", "optimizer", "metrics", "validation_metrics"]:
+                #     if key in ["metrics", "validation_metrics"]:
+                #         for i in range(len(val)):
+                #             val[i] = type(val[i]).__name__
+                #     elif key in ["optimizer"]:
+                #         # TODO: Why "type()" for optimizer return "type"?
+                #         val = str(val)
+                #         dot_idx = val.rfind(".") + 1
+                #         val = val[dot_idx:-2]
+                #     else:
+                #         val = type(val).__name__
                 env_params[key] += [val] * expected_size
 
             for param in train_params[1]:
@@ -100,7 +99,7 @@ def do_experiments(
         # print(df)
         keras.backend.clear_session()
         with open(
-            f"./testlaunches/solution_tables/train_result/{func_name}.csv",
+            f"./solution_tables/train_result/{func_name}.csv",
             "w",
             newline="",
         ) as outfile:

@@ -93,131 +93,19 @@ from tests.utils import array_compare, init_params
     ],
 )
 def test_densenet_predict(inp, shape, act_init, w_init, b_init, out_size, expected):
-    act_func, weight_initializer, bias_initializer = init_params(
-        act_name=act_init, weight_name=w_init, bias_name=b_init
+    weight_initializer, bias_initializer = init_params(
+        weight_name=w_init, bias_name=b_init
     )
 
     nn = DenseNet(
         shape[0],
         shape[1],
-        activation_func=act_func,
+        activation_func=act_init,
         weight=weight_initializer,
         biases=bias_initializer,
         output_size=out_size,
     )
     res = nn(inp).numpy()
-    assert array_compare(res, expected)
-
-
-@pytest.mark.parametrize(
-    "inp, shape, threshold, w_init, b_init, out_size, expected",
-    [
-        (
-            np.array([[1]], dtype=float),
-            [1, [1]],
-            1,
-            "ones",
-            "zeros",
-            1,
-            np.array([[1]], dtype=float),
-        ),
-        (
-            np.array([[1]], dtype=float),
-            [1, [1]],
-            1,
-            "zeros",
-            "zeros",
-            1,
-            np.array([[0]], dtype=float),
-        ),
-        (
-            np.array([[1]], dtype=float),
-            [1, [1]],
-            1,
-            "zeros",
-            "ones",
-            1,
-            np.array([[1]], dtype=float),
-        ),
-        (
-            np.array([[1, 1]], dtype=float),
-            [2, [1]],
-            1,
-            "ones",
-            "zeros",
-            1,
-            np.array([[1]], dtype=float),
-        ),
-        (
-            np.array([[1], [1]], dtype=float),
-            [1, [1]],
-            1,
-            "ones",
-            "zeros",
-            1,
-            np.array([[1], [1]], dtype=float),
-        ),
-        (
-            np.array([[1, 1], [1, 1]], dtype=float),
-            [2, [1]],
-            1,
-            "ones",
-            "zeros",
-            1,
-            np.array([[1], [1]], dtype=float),
-        ),
-        (
-            np.array([[1, 1], [1, 1]], dtype=float),
-            [2, [1]],
-            1,
-            "ones",
-            "zeros",
-            2,
-            np.array([[1, 1], [1, 1]], dtype=float),
-        ),
-        (
-            np.array([[-1, -1], [-1, -1]], dtype=float),
-            [2, [1]],
-            1,
-            "ones",
-            "zeros",
-            1,
-            np.array([[0], [0]], dtype=float),
-        ),
-        (
-            np.array([[1, 1], [1, 1]], dtype=float),
-            [2, []],
-            2,
-            "ones",
-            "zeros",
-            2,
-            np.array([[1, 1], [1, 1]], dtype=float),
-        ),
-        (
-            np.array([[1, 1], [1, 1]], dtype=float),
-            [2, []],
-            3,
-            "ones",
-            "zeros",
-            2,
-            np.array([[0, 0], [0, 0]], dtype=float),
-        ),
-    ],
-)
-def test_perceptron_predict(inp, shape, threshold, w_init, b_init, out_size, expected):
-    weight_initializer, bias_initializer = init_params(
-        weight_name=w_init, bias_name=b_init
-    )
-
-    nn = IModel.create_perceptron(
-        shape[0],
-        out_size,
-        shape[1],
-        threshold=threshold,
-        weight=weight_initializer,
-        biases=bias_initializer,
-    )
-    res = nn.feedforward(inp).numpy()
     assert array_compare(res, expected)
 
 
@@ -299,15 +187,15 @@ def test_perceptron_predict(inp, shape, threshold, w_init, b_init, out_size, exp
     ],
 )
 def test_neuron_predict(inp, shape, act_init, w_init, b_init, out_size, expected):
-    act_func, weight_initializer, bias_initializer = init_params(
-        act_name=act_init, weight_name=w_init, bias_name=b_init
+    weight_initializer, bias_initializer = init_params(
+        weight_name=w_init, bias_name=b_init
     )
 
     nn = IModel.create_neuron(
         shape[0],
         out_size,
         shape[1],
-        activation=act_func,
+        activation=act_init,
         weight=weight_initializer,
         biases=bias_initializer,
     )

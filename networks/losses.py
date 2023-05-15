@@ -1,6 +1,3 @@
-"""
-Custom loss functions module
-"""
 from abc import ABC
 from typing import Callable
 
@@ -10,12 +7,13 @@ from tensorflow import keras
 
 class RelativeError(tf.keras.losses.Loss, ABC):
     def __init__(
-        self, reduction=tf.keras.losses.Reduction.NONE, name="relative", **kwargs
+        self, reduction=tf.keras.losses.Reduction.NONE, name="relative", eps=1e-6, **kwargs
     ):
         super(RelativeError, self).__init__(reduction=reduction, name=name, **kwargs)
+        self.eps = eps
 
     def __call__(self, y_true, y_pred, sample_weight=None):
-        y_upd = tf.where(y_true == 0.0, 1.0, y_true)
+        y_upd = tf.where(y_true <= self.eps, 1.0, y_true)
         y = tf.math.divide(y_pred, y_upd)
         loss = tf.math.reduce_mean(tf.abs(y - 1))
         return loss
@@ -66,13 +64,13 @@ _losses: dict = {
     # "SparseCategoricalCrossentropy": keras.losses.SparseCategoricalCrossentropy(),  # Not usable in my task
     # "SquaredHinge": keras.losses.SquaredHinge(),                                    # Not usable in my task
     "Huber": keras.losses.Huber(),
-    "KLDivergence": keras.losses.KLDivergence(),  # If you're using `model.compile()`, did you forget to provide a `loss`argument?
-    "LogCosh": keras.losses.LogCosh(),  # If you're using `model.compile()`, did you forget to provide a `loss`argument?
-    "MeanAbsoluteError": keras.losses.MeanAbsoluteError(),  # If you're using `model.compile()`, did you forget to provide a `loss`argument?
+    # "KLDivergence": keras.losses.KLDivergence(),  # cant calculate log by negative value
+    "LogCosh": keras.losses.LogCosh(),
+    "MeanAbsoluteError": keras.losses.MeanAbsoluteError(),
     "MeanAbsolutePercentageError": keras.losses.MeanAbsolutePercentageError(),
     "MeanSquaredError": keras.losses.MeanSquaredError(),
-    "MeanSquaredLogarithmicError": keras.losses.MeanSquaredLogarithmicError(),  # If you're using `model.compile()`, did you forget to provide a `loss`argument?
-    "Poisson": keras.losses.Poisson(),
+    "MeanSquaredLogarithmicError": keras.losses.MeanSquaredLogarithmicError(),
+    # "Poisson": keras.losses.Poisson(),  # cant calculate log by negative value
     "RelativeError": RelativeError(),
     "RelativeAbsoluteError": RelativeAbsoluteError(),
     "MaxAbsoluteDeviation": MaxAbsoluteDeviation(),

@@ -114,15 +114,15 @@ def test_str_vars_to_float_vars(eq, eq_vars, expected):
     ],
 )
 def test_build_network_answer(eq_vars, shape, act_init, w_init, b_init, expected):
-    act_func, weight_initializer, bias_initializer = init_params(
-        act_name=act_init, weight_name=w_init, bias_name=b_init
+    weight_initializer, bias_initializer = init_params(
+        weight_name=w_init, bias_name=b_init
     )
 
     nn = IModel(
         shape[0],
         shape[1],
         shape[2],
-        activation_func=act_func,
+        activation_func=act_init,
         weight_init=weight_initializer,
         bias_init=bias_initializer,
     )

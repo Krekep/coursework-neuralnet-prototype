@@ -2,10 +2,45 @@ from typing import Union, Tuple, List
 
 
 def array1d_creator(elem_type: str):
+    """
+    Return function for creating cpp one dimensional arrays (e.g. float[]) with specified type
+
+    Parameters
+    ----------
+    elem_type:
+        type of arrays
+
+    Returns
+    -------
+    creator: Callable
+        function for create arrays
+    """
     def array1d_spec_type_creator(name: str, size: int, initial_value=None) -> str:
+        """
+        Create string representation of cpp one dimensional array
+
+        Parameters
+        ----------
+        name: str
+            array name
+        size: int
+            array size
+        initial_value: list
+            initial value for array. Can be None, list of values (len should be equal to size) or single value
+
+        Returns
+        -------
+        array: str
+        """
         res = f"{elem_type} {name}[{size}]"
         if initial_value is not None:
-            res += " = {" + ", ".join([str(initial_value)] * size) + "}"
+            if isinstance(initial_value, list):
+                if len(initial_value) == size:
+                    res += " = {" + ", ".join(map(str, initial_value)) + "}"
+                else:
+                    raise Exception("Incompatibility size of arrays")
+            else:
+                res += " = {" + ", ".join([str(initial_value)] * size) + "}"
         res += ";\n"
         return res
 
@@ -24,8 +59,59 @@ def array1d_heap_creator(elem_type: str):
 
 
 def array2d_creator(elem_type: str):
-    def array2d_spec_type_creator(name: str, size_x: int, size_y: int) -> str:
-        return f"{elem_type} {name}[{size_x}][{size_y}];\n"
+    """
+    Return function for creating cpp one dimensional arrays (e.g. float[]) with specified type
+
+    Parameters
+    ----------
+    elem_type:
+        type of arrays
+
+    Returns
+    -------
+    creator: Callable
+        function for create arrays
+    """
+    def array2d_spec_type_creator(name: str, size_x: int, size_y: int, initial_value=None, reverse=False) -> str:
+        """
+        Create string representation of cpp one dimensional array
+
+        Parameters
+        ----------
+        name: str
+            array name
+        size_x: int
+            first dimension size
+        size_y: int
+            second dimension  size
+        initial_value: list
+            initial value for array. Can be None, list[list] of values (len should be equal to size) or single value
+
+        Returns
+        -------
+        array: str
+        """
+        res = f"{elem_type} {name}[{size_x}][{size_y}]"
+        if initial_value is not None:
+            if isinstance(initial_value, list):
+                if len(initial_value) == size_x and len(initial_value[0]) == size_y:
+                    if reverse:
+                        initial_value = [[initial_value[i][j] for i in range(size_x)] for j in range(size_y - 1, -1, -1)]
+                    temp = "{ "
+                    for i in range(size_x - 1):
+                        temp += "{" + ", ".join(map(str, initial_value[i])) + "}, \n"
+                    temp += "{" + ", ".join(map(str, initial_value[-1])) + "} }"
+                    res += " = " + temp
+                else:
+                    raise Exception("Incompatibility size of arrays")
+            else:
+                temp = "{ "
+                for i in range(size_x - 1):
+                    temp += "{" + ", ".join([str(initial_value)] * size_y) + "}, \n"
+                temp += "{" + ", ".join([str(initial_value)] * size_y) + "} }"
+                res += " = " + temp
+        res += ";\n"
+        return res
 
     return array2d_spec_type_creator
 

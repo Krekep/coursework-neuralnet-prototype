@@ -35,17 +35,13 @@ class MyDense(keras.layers.Layer):
         self,
         input_dim=32,
         units=32,
-        activation_func=tf.keras.activations.linear,
+        activation_func: str = "linear",
         weight_initializer=tf.random_normal_initializer(),
         bias_initializer=tf.random_normal_initializer(),
         is_debug=False,
         **kwargs,
     ):
-        activation_names = None
         decorator_params = None
-        if "activation_names" in kwargs.keys():
-            activation_names = kwargs.get("activation_names")
-            kwargs.pop("activation_names")
 
         if "decorator_params" in kwargs.keys():
             decorator_params = kwargs.get("decorator_params")
@@ -74,13 +70,24 @@ class MyDense(keras.layers.Layer):
         self.units = units
         self.input_dim = input_dim
         self._is_debug = is_debug
-        self.activation_func = activation_func
+        self.activation_func = activations.get(activation_func)
+        self.activation_name = activation_func
         self.weight_initializer = weight_initializer
         self.bias_initializer = bias_initializer
-        self.activation_name = activation_names
         self.decorator_params: Optional[dict] = decorator_params
 
     def call(self, inputs, **kwargs):
+        """
+        Obtaining a layer response on the input data vector
+        Parameters
+        ----------
+        inputs
+        kwargs
+
+        Returns
+        -------
+
+        """
         if self.decorator_params is None:
             return self.activation_func(tf.matmul(inputs, self.w) + self.b)
         else:
@@ -97,7 +104,14 @@ class MyDense(keras.layers.Layer):
             res += f"activation = {self.activation_name}\n"
         return res
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """
+        Export layer to dictionary of parameters
+        Returns
+        -------
+        config: dict
+            dictionary of parameters
+        """
         w = self.w.value().numpy()
         b = self.b.value().numpy()
         res = {
@@ -107,7 +121,7 @@ class MyDense(keras.layers.Layer):
             LAYER_DICT_NAMES["biases"]: b.tolist(),
             LAYER_DICT_NAMES["layer_type"]: type(self).__name__,
             LAYER_DICT_NAMES["dtype"]: w.dtype.name,
-            LAYER_DICT_NAMES["activation"]: self.activation_func.__name__
+            LAYER_DICT_NAMES["activation"]: self.activation_name
             if self.activation_name is None
             else self.activation_name,
             LAYER_DICT_NAMES["decorator_params"]: _dec_params_to_list(
@@ -118,6 +132,16 @@ class MyDense(keras.layers.Layer):
         return res
 
     def from_dict(self, config):
+        """
+        Restore layer from dictionary of parameters
+        Parameters
+        ----------
+        config
+
+        Returns
+        -------
+
+        """
         w = config[LAYER_DICT_NAMES["weights"]]
         b = config[LAYER_DICT_NAMES["biases"]]
         act = config[LAYER_DICT_NAMES["activation"]]
@@ -130,7 +154,7 @@ class MyDense(keras.layers.Layer):
         self.b = tf.Variable(
             initial_value=b, dtype=config[LAYER_DICT_NAMES["dtype"]], trainable=True
         )
-        self.activation_func = activations.deserialize(act)
+        self.activation_func = activations.get(act)
         self.activation_name = act
         self.decorator_params = dec_params
 
