@@ -1,0 +1,50 @@
+
+Package: GANN
+version: 0.2
+Author: Alimov Pavel Gennadievich
+{
+  "net_type": "MyDense",
+  "name": "net",
+  "input_size": 2,
+  "block_size": [
+    1
+  ],
+  "output_size": 1,
+  "layer": [
+    {
+      "shape": 1,
+      "inp_size": 2,
+      "weights": [
+        [
+          0.005075483117252588
+        ],
+        [
+          0.0034089647233486176
+        ]
+      ],
+      "biases": [
+        -0.03237786516547203
+      ],
+      "layer_type": "MyDense",
+      "dtype": "float32",
+      "activation": "sigmoid",
+      "decorator_params": null
+    }
+  ],
+  "out_layer": {
+    "shape": 1,
+    "inp_size": 1,
+    "weights": [
+      [
+        -0.08870998024940491
+      ]
+    ],
+    "biases": [
+      0.11818887293338776
+    ],
+    "layer_type": "MyDense",
+    "dtype": "float32",
+    "activation": "sigmoid",
+    "decorator_params": null
+  }
+}
