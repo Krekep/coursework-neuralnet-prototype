@@ -2,6 +2,7 @@ black
 keras
 matplotlib
 numpy
+pre-commit
 pytest
 scipy
 tensorflow
