@@ -193,3 +193,4 @@ testlaunches/archive
 *.o
 *.h5
 *.txt
+*.apg
