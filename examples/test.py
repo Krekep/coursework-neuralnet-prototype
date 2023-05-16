@@ -68,7 +68,7 @@ import tensorflow as tf
 #     1,
 # )
 # nn.export_to_file("./test_export")
-# 
+#
 # nn_loaded = IModel(
 #     1,
 #     [1],
@@ -76,19 +76,19 @@ import tensorflow as tf
 # )
 # nn_loaded.from_file("./test_export")
 # nn_loaded.export_to_file("./test_export1")
-# 
+#
 # x = inp.copy()
 # x1 = inp.copy()
-# 
+#
 # print(nn.network(inp).numpy())
 # print(nn_loaded.network(inp).numpy())
-# 
+#
 # print("FIRST")
 # for i, layer in enumerate(nn.network.blocks):
 #     x = layer(x)
 #     print(layer.w.numpy(), layer.b.numpy())
 #     print(f"Layer {i}", x)
-# 
+#
 # print(
 #     nn.network.out_layer.w.numpy(),
 #     nn.network.out_layer.b.numpy(),
@@ -97,13 +97,13 @@ import tensorflow as tf
 # x = nn.network.out_layer(x)
 # print(f"Classifier", x)
 # print()
-# 
+#
 # print("SECOND")
 # for i, layer in enumerate(nn_loaded.network.blocks):
 #     x1 = layer(x1)
 #     print(layer.w.numpy(), layer.b.numpy())
 #     print(f"Layer {i}", x1)
-# 
+#
 # print(
 #     nn_loaded.network.out_layer.w.numpy(),
 #     nn_loaded.network.out_layer.b.numpy(),

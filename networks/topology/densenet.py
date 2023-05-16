@@ -10,15 +10,15 @@ from networks.layers.dense import MyDense
 
 class DenseNet(tf.keras.Model):
     def __init__(
-            self,
-            input_size: int = 2,
-            block_size: list = None,
-            output_size: int = 10,
-            activation_func: str = "linear",
-            weight=keras.initializers.get("ones"),
-            biases=keras.initializers.get("zeros"),
-            is_debug: bool = False,
-            **kwargs,
+        self,
+        input_size: int = 2,
+        block_size: list = None,
+        output_size: int = 10,
+        activation_func: str = "linear",
+        weight=keras.initializers.get("ones"),
+        biases=keras.initializers.get("zeros"),
+        is_debug: bool = False,
+        **kwargs,
     ):
         decorator_params: List[Optional[Dict]] = [None]
         if "decorator_params" in kwargs.keys():
@@ -28,17 +28,17 @@ class DenseNet(tf.keras.Model):
             decorator_params = [None]
 
         if (
-                isinstance(decorator_params, list)
-                and len(decorator_params) == 1
-                and decorator_params[0] is None
-                or decorator_params is None
+            isinstance(decorator_params, list)
+            and len(decorator_params) == 1
+            and decorator_params[0] is None
+            or decorator_params is None
         ):
             decorator_params = [None] * (len(block_size) + 1)
 
         if (
-                isinstance(decorator_params, list)
-                and len(decorator_params) == 1
-                and decorator_params[0] is not None
+            isinstance(decorator_params, list)
+            and len(decorator_params) == 1
+            and decorator_params[0] is not None
         ):
             decorator_params = decorator_params * (len(block_size) + 1)
 
@@ -96,12 +96,12 @@ class DenseNet(tf.keras.Model):
         self.trained_time = {"train_time": 0.0, "epoch_time": [], "predict_time": 0}
 
     def custom_compile(
-            self,
-            rate=1e-2,
-            optimizer="SGD",
-            loss_func="MeanSquaredError",
-            metric_funcs=None,
-            run_eagerly=False,
+        self,
+        rate=1e-2,
+        optimizer="SGD",
+        loss_func="MeanSquaredError",
+        metric_funcs=None,
+        run_eagerly=False,
     ):
         """
         Configures the model for training
@@ -129,7 +129,7 @@ class DenseNet(tf.keras.Model):
             optimizer=opt(learning_rate=rate),
             loss=loss,
             metrics=m,
-            run_eagerly=run_eagerly
+            run_eagerly=run_eagerly,
         )
 
     def call(self, inputs, **kwargs):
@@ -219,12 +219,12 @@ class DenseNet(tf.keras.Model):
 
     @classmethod
     def from_layers(
-            cls,
-            input_size: int,
-            block_size: List[int],
-            output_size: int,
-            layers: List[MyDense],
-            **kwargs,
+        cls,
+        input_size: int,
+        block_size: List[int],
+        output_size: int,
+        layers: List[MyDense],
+        **kwargs,
     ):
         """
         Restore neural network from list of layers

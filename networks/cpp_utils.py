@@ -15,6 +15,7 @@ def array1d_creator(elem_type: str):
     creator: Callable
         function for create arrays
     """
+
     def array1d_spec_type_creator(name: str, size: int, initial_value=None) -> str:
         """
         Create string representation of cpp one dimensional array
@@ -72,7 +73,10 @@ def array2d_creator(elem_type: str):
     creator: Callable
         function for create arrays
     """
-    def array2d_spec_type_creator(name: str, size_x: int, size_y: int, initial_value=None, reverse=False) -> str:
+
+    def array2d_spec_type_creator(
+        name: str, size_x: int, size_y: int, initial_value=None, reverse=False
+    ) -> str:
         """
         Create string representation of cpp one dimensional array
 
@@ -96,7 +100,10 @@ def array2d_creator(elem_type: str):
             if isinstance(initial_value, list):
                 if len(initial_value) == size_x and len(initial_value[0]) == size_y:
                     if reverse:
-                        initial_value = [[initial_value[i][j] for i in range(size_x)] for j in range(size_y - 1, -1, -1)]
+                        initial_value = [
+                            [initial_value[i][j] for i in range(size_x)]
+                            for j in range(size_y - 1, -1, -1)
+                        ]
                     temp = "{ "
                     for i in range(size_x - 1):
                         temp += "{" + ", ".join(map(str, initial_value[i])) + "}, \n"

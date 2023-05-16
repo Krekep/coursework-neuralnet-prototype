@@ -7,7 +7,11 @@ from tensorflow import keras
 
 class RelativeError(tf.keras.losses.Loss, ABC):
     def __init__(
-        self, reduction=tf.keras.losses.Reduction.NONE, name="relative", eps=1e-6, **kwargs
+        self,
+        reduction=tf.keras.losses.Reduction.NONE,
+        name="relative",
+        eps=1e-6,
+        **kwargs
     ):
         super(RelativeError, self).__init__(reduction=reduction, name=name, **kwargs)
         self.eps = eps

@@ -32,17 +32,19 @@ def extract_iv(eq: str) -> Tuple[float, float]:
     iv: tuple[float, float]
         Pair of point and value at point
     """
-    left_v = float(eq[eq.index("(") + 1: eq.index(")")])
-    right_v = float(eq[eq.index("=") + 1:])
+    left_v = float(eq[eq.index("(") + 1 : eq.index(")")])
+    right_v = float(eq[eq.index("=") + 1 :])
     return left_v, right_v
 
 
 def build_plot(
-        network: list[imodel.IModel] | imodel.IModel, interval: Tuple[float, float], step: float,
-        title="",
-        labels: list[str] = None,
-        true_data: tuple[list, list] = None,
-        is_debug=False
+    network: list[imodel.IModel] | imodel.IModel,
+    interval: Tuple[float, float],
+    step: float,
+    title="",
+    labels: list[str] = None,
+    true_data: tuple[list, list] = None,
+    is_debug=False,
 ) -> None:
     """
     Builds a two-dimensional graph on an interval with a given step.

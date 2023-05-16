@@ -148,8 +148,7 @@ def train(
         "nets_param": [
             [
                 shape,  # shape
-                ["sigmoid"] * len(shape)
-                + ["linear"],  # activation functions
+                ["sigmoid"] * len(shape) + ["linear"],  # activation functions
                 [None] * (len(shape) + 1),  # decorator parameters for activation
             ]
             for shape in _default_shapes
@@ -310,8 +309,7 @@ def experiments_train(
         "nets_param": [
             [
                 shape,  # shape
-                ["sigmoid"] * len(shape)
-                + ["linear"],  # activation functions
+                ["sigmoid"] * len(shape) + ["linear"],  # activation functions
                 [None] * (len(shape) + 1),  # decorator parameters for activation
             ]
             for shape in _default_shapes
@@ -489,14 +487,8 @@ def full_search(
         #     key
         #     for key in get_all_optimizers()
         # ],
-        "metrics": [
-            key
-            for key in get_all_metric_functions()
-        ],
-        "validation_metrics": [
-            key
-            for key in get_all_metric_functions()
-        ],
+        "metrics": [key for key in get_all_metric_functions()],
+        "validation_metrics": [key for key in get_all_metric_functions()],
         "nets_shape": _default_shapes,
         "validation_split": [0.2],
         "rates": [1e-2],

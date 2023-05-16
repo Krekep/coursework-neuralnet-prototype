@@ -321,11 +321,15 @@ class IModel(object):
         transform_output_array = ""
         return_stat = "return answer;\n"
 
-        creator_1d: Callable[[str, int, Optional[list]], str] = cpp_utils.array1d_creator("float")
+        creator_1d: Callable[
+            [str, int, Optional[list]], str
+        ] = cpp_utils.array1d_creator("float")
         creator_heap_1d: Callable[[str, int], str] = cpp_utils.array1d_heap_creator(
             "float"
         )
-        creator_2d: Callable[[str, int, int, Optional[list]], str] = cpp_utils.array2d_creator("float")
+        creator_2d: Callable[
+            [str, int, int, Optional[list]], str
+        ] = cpp_utils.array2d_creator("float")
         if array_type == "[]":
             signature = f"float* feedforward(float x_array[])\n"
 
@@ -358,7 +362,7 @@ class IModel(object):
                 layer_dict[LAYER_DICT_NAMES["inp_size"]],
                 layer_dict[LAYER_DICT_NAMES["shape"]],
                 layer_dict[LAYER_DICT_NAMES["weights"]],
-                reverse=reverse
+                reverse=reverse,
             )
 
         fill_weights = ""
@@ -366,7 +370,9 @@ class IModel(object):
         create_biases = ""
         for i, layer_dict in enumerate(layers):
             create_biases += creator_1d(
-                f"bias_{i + 1}", layer_dict[LAYER_DICT_NAMES["shape"]], layer_dict[LAYER_DICT_NAMES["bias"]]
+                f"bias_{i + 1}",
+                layer_dict[LAYER_DICT_NAMES["shape"]],
+                layer_dict[LAYER_DICT_NAMES["bias"]],
             )
 
         fill_biases = ""
@@ -568,7 +574,9 @@ class IModel(object):
         return str(self.network)
 
     @classmethod
-    def create_neuron(cls, input_size: int, output_size: int, shape: list[int], **kwargs):
+    def create_neuron(
+        cls, input_size: int, output_size: int, shape: list[int], **kwargs
+    ):
         """
         Create neural network with passed size and sigmoid activation
 
